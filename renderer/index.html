@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haru-Haru</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <div class="logo">
+        <h1>하루하루</h1>
+        <span class="subtitle">Daily Tracker</span>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" data-view="briefing">
+          <span class="nav-icon">☀️</span>
+          <span>아침 브리핑</span>
+        </li>
+        <li class="nav-item" data-view="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>대시보드</span>
+        </li>
+        <li class="nav-item" data-view="journal">
+          <span class="nav-icon">📝</span>
+          <span>업무 일지</span>
+        </li>
+        <li class="nav-item" data-view="trend">
+          <span class="nav-icon">📈</span>
+          <span>트렌드</span>
+        </li>
+        <li class="nav-item" data-view="settings">
+          <span class="nav-icon">⚙️</span>
+          <span>설정</span>
+        </li>
+      </ul>
+      <div class="tracking-status" id="tracking-status">
+        <div class="status-dot active"></div>
+        <span>추적 중</span>
+      </div>
+    </nav>
+    <main class="content" id="content">
+      <!-- Views rendered here -->
+    </main>
+  </div>
+  <script src="lib/chart.min.js"></script>
+  <script src="views/briefing.js"></script>
+  <script src="views/dashboard.js"></script>
+  <script src="views/journal.js"></script>
+  <script src="views/trend.js"></script>
+  <script src="views/settings.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
