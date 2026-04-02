@@ -1,7 +1,7 @@
 let dashboardChart = null;
 
 async function renderDashboard(container, date) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const isToday = date >= today;
 
   container.innerHTML = `

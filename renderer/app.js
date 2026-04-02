@@ -3,9 +3,14 @@ function esc(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Local date helper (avoids UTC shift from toISOString)
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 // Current state
 let currentView = 'briefing';
-let currentDate = new Date().toISOString().split('T')[0];
+let currentDate = toLocalDateStr(new Date());
 
 // Navigation
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -54,15 +59,15 @@ function formatDate(dateStr) {
 function prevDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(d);
 }
 
 function nextDate(dateStr) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   if (dateStr >= today) return dateStr; // 오늘 이후로는 이동 불가
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(d);
 }
 
 function formatTime(totalSec) {
@@ -125,7 +130,7 @@ switchView('briefing');
 let lastSummaryJson = '';
 
 async function softRefreshDashboard() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   if (currentDate !== today) return; // only auto-refresh today's view
 
   try {

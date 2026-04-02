@@ -1,5 +1,5 @@
 async function renderBriefing(container, date) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const isToday = date >= today;
 
   container.innerHTML = `
@@ -47,7 +47,7 @@ async function renderBriefing(container, date) {
   // Load yesterday's stats for display
   const yesterday = new Date(date + 'T00:00:00');
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = toLocalDateStr(yesterday);
 
   const [stats, daySummary, weeklyData] = await Promise.all([
     window.api.getDailyStats(yesterdayStr),

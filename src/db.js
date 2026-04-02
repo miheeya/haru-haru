@@ -8,6 +8,11 @@ let db = null;
 let dbPath = null;
 let saveTimer = null;
 
+// Local date helper (avoids UTC shift from toISOString)
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 async function initDB() {
   const SQL = await initSqlJs();
   const userDataPath = app.getPath('userData');
@@ -430,7 +435,7 @@ function calculateFocusScore(date) {
 }
 
 function getDailyStats(date) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
 
   // For past dates, try cache first
   if (date !== today) {
@@ -469,7 +474,7 @@ function getWeeklyStats(endDate) {
   for (let i = 6; i >= 0; i--) {
     const day = new Date(d);
     day.setDate(d.getDate() - i);
-    const dateStr = day.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(day);
     days.push(getDailyStats(dateStr));
   }
 

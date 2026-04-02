@@ -49,13 +49,13 @@ async function renderTrend(container, date) {
     prev() {
       const d = new Date(weekEndDate + 'T00:00:00');
       d.setDate(d.getDate() - 7);
-      weekEndDate = d.toISOString().split('T')[0];
+      weekEndDate = toLocalDateStr(d);
       loadWeekData();
     },
     next() {
       const d = new Date(weekEndDate + 'T00:00:00');
       d.setDate(d.getDate() + 7);
-      weekEndDate = d.toISOString().split('T')[0];
+      weekEndDate = toLocalDateStr(d);
       loadWeekData();
     }
   };
