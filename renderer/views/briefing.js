@@ -1,18 +1,14 @@
 async function renderBriefing(container, date) {
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = date >= today;
+
   container.innerHTML = `
     <div class="dashboard-header">
-      <h2>☀️ 좋은 아침이에요</h2>
+      <h2>☀️ 오늘의 브리핑</h2>
       <div class="date-nav">
-        <button id="briefing-prev">&lt;</button>
+        <button data-nav="prev" data-view="briefing">&lt;</button>
         <span class="current-date">${formatDate(date)}</span>
-        <button id="briefing-next">&gt;</button>
-      </div>
-    </div>
-
-    <div class="briefing-card" id="briefing-card">
-      <div class="briefing-label">🤖 AI 브리핑</div>
-      <div class="briefing-text" id="briefing-text">
-        <span class="spinner"></span> 브리핑 생성 중...
+        <button data-nav="next" data-view="briefing" ${isToday ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&gt;</button>
       </div>
     </div>
 
@@ -42,23 +38,11 @@ async function renderBriefing(container, date) {
       <div class="category-legend" id="b-category-legend"></div>
     </div>
 
-    <div class="insights-row" id="b-insights"></div>
-
     <div class="chart-container">
       <h3>이번 주 집중 점수</h3>
       <div class="weekly-sparkline" id="b-weekly-sparkline"></div>
     </div>
   `;
-
-  // Date nav
-  document.getElementById('briefing-prev').addEventListener('click', () => {
-    currentDate = prevDate(currentDate);
-    switchView('briefing');
-  });
-  document.getElementById('briefing-next').addEventListener('click', () => {
-    currentDate = nextDate(currentDate);
-    switchView('briefing');
-  });
 
   // Load yesterday's stats for display
   const yesterday = new Date(date + 'T00:00:00');
@@ -93,9 +77,6 @@ async function renderBriefing(container, date) {
 
   // Weekly sparkline
   renderWeeklySparkline(weeklyData);
-
-  // Load AI briefing (may take a few seconds on first call)
-  loadBriefing(date, stats);
 }
 
 function formatTimeHtml(totalSec) {
@@ -145,9 +126,6 @@ function renderWeeklySparkline(weeklyData) {
     return;
   }
 
-  const days = ['월', '화', '수', '목', '금', '토', '일'];
-  const maxScore = Math.max(...weeklyData.days.map(d => d.focusScore || 0), 1);
-
   container.innerHTML = `<div class="sparkline">${weeklyData.days.map((d, i) => {
     const score = d.focusScore;
     const height = score !== null ? Math.max(Math.round((score / 100) * 60), 4) : 4;
@@ -162,43 +140,4 @@ function renderWeeklySparkline(weeklyData) {
     </div>`;
   }).join('')}</div>
   ${weeklyData.avgScore !== null ? `<div style="margin-top:12px;font-size:13px;color:var(--text-secondary)">주간 평균: <span style="color:#8ab4f8;font-weight:600">${weeklyData.avgScore}점</span></div>` : ''}`;
-}
-
-async function loadBriefing(date, stats) {
-  const textEl = document.getElementById('briefing-text');
-  const insightsEl = document.getElementById('b-insights');
-
-  try {
-    const result = await window.api.getMorningBriefing(date);
-    if (result.error) {
-      textEl.innerHTML = `<span style="color:#ea4335">${esc(result.error)}</span>
-        <button class="btn" style="margin-left:12px" onclick="loadBriefing('${date}')">다시 시도</button>`;
-      return;
-    }
-
-    const b = result.briefing;
-    textEl.innerHTML = esc(b.summary || '요약 없음');
-
-    // Insight cards
-    const cards = [];
-    if (b.pattern) {
-      cards.push(`<div class="insight-card">
-        <div class="insight-icon">📊</div>
-        <div class="insight-title">어제 패턴</div>
-        <div class="insight-body">${esc(b.pattern)}</div>
-      </div>`);
-    }
-    if (b.suggestion) {
-      cards.push(`<div class="insight-card">
-        <div class="insight-icon">💡</div>
-        <div class="insight-title">오늘 제안</div>
-        <div class="insight-body">${esc(b.suggestion)}</div>
-      </div>`);
-    }
-    if (cards.length > 0) {
-      insightsEl.innerHTML = cards.join('');
-    }
-  } catch (err) {
-    textEl.innerHTML = `<span style="color:var(--text-secondary)">브리핑을 불러올 수 없습니다.</span>`;
-  }
 }

@@ -5,9 +5,9 @@ async function renderTrend(container, date) {
     <div class="dashboard-header">
       <h2>📈 트렌드</h2>
       <div class="date-nav">
-        <button id="trend-prev-week">&lt; 이전 주</button>
+        <button data-nav="trend-prev">&lt; 이전 주</button>
         <span class="current-date" id="trend-week-label"></span>
-        <button id="trend-next-week">다음 주 &gt;</button>
+        <button data-nav="trend-next">다음 주 &gt;</button>
       </div>
     </div>
 
@@ -32,24 +32,9 @@ async function renderTrend(container, date) {
         <div class="value" id="t-best-day" style="font-size:16px">-</div>
       </div>
     </div>
-
-    <div class="journal-section" id="weekly-report-section">
-      <div class="flex-between mb-12">
-        <h3>주간 AI 리포트</h3>
-        <button class="btn" id="generate-weekly-btn">리포트 생성</button>
-      </div>
-      <div class="ai-summary-box" id="weekly-report-content">
-        <div class="empty-state">
-          <div class="icon">📋</div>
-          <p>"리포트 생성" 버튼을 클릭하세요.</p>
-        </div>
-      </div>
-    </div>
   `;
 
-  // Week navigation state
   let weekEndDate = date;
-  const weekEnd = new Date(weekEndDate + 'T00:00:00');
 
   function updateWeekLabel() {
     const end = new Date(weekEndDate + 'T00:00:00');
@@ -59,41 +44,21 @@ async function renderTrend(container, date) {
       `${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
   }
 
-  document.getElementById('trend-prev-week').addEventListener('click', () => {
-    const d = new Date(weekEndDate + 'T00:00:00');
-    d.setDate(d.getDate() - 7);
-    weekEndDate = d.toISOString().split('T')[0];
-    loadWeekData();
-  });
-
-  document.getElementById('trend-next-week').addEventListener('click', () => {
-    const d = new Date(weekEndDate + 'T00:00:00');
-    d.setDate(d.getDate() + 7);
-    weekEndDate = d.toISOString().split('T')[0];
-    loadWeekData();
-  });
-
-  document.getElementById('generate-weekly-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('generate-weekly-btn');
-    const content = document.getElementById('weekly-report-content');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> 생성 중...';
-
-    const result = await window.api.generateWeeklyReport(weekEndDate);
-    if (result.error) {
-      content.innerHTML = `<p style="color:#ea4335">${esc(result.error)}</p>`;
-    } else {
-      const r = result.report;
-      content.innerHTML = `
-        <p><strong>${esc(r.weekly_summary || '')}</strong></p>
-        ${r.best_day ? `<p>🏆 ${esc(r.best_day)}</p>` : ''}
-        ${r.trend ? `<p>📊 ${esc(r.trend)}</p>` : ''}
-        ${r.next_week_suggestion ? `<p>💡 ${esc(r.next_week_suggestion)}</p>` : ''}
-      `;
+  // Expose trend nav for event delegation in app.js
+  window._trendState = {
+    prev() {
+      const d = new Date(weekEndDate + 'T00:00:00');
+      d.setDate(d.getDate() - 7);
+      weekEndDate = d.toISOString().split('T')[0];
+      loadWeekData();
+    },
+    next() {
+      const d = new Date(weekEndDate + 'T00:00:00');
+      d.setDate(d.getDate() + 7);
+      weekEndDate = d.toISOString().split('T')[0];
+      loadWeekData();
     }
-    btn.disabled = false;
-    btn.textContent = '리포트 생성';
-  });
+  };
 
   async function loadWeekData() {
     updateWeekLabel();

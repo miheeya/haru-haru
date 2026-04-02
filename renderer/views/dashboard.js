@@ -1,13 +1,20 @@
 let dashboardChart = null;
 
 async function renderDashboard(container, date) {
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = date >= today;
+
   container.innerHTML = `
+    <div style="background:#330;padding:8px 12px;border-radius:8px;margin-bottom:12px;font-size:12px;font-family:monospace;color:#ff0">
+      DEBUG BUILD ${new Date().toISOString().slice(0,19)} | date=${date} | today=${today}
+      <div id="debug-log" style="margin-top:4px;color:#0ff">아무 곳이나 클릭하면 여기에 표시됩니다</div>
+    </div>
     <div class="dashboard-header">
       <h2>대시보드</h2>
       <div class="date-nav">
-        <button id="prev-date">&lt;</button>
+        <button data-nav="prev" data-view="dashboard">&lt;</button>
         <span class="current-date">${formatDate(date)}</span>
-        <button id="next-date">&gt;</button>
+        <button data-nav="next" data-view="dashboard" ${isToday ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&gt;</button>
       </div>
     </div>
     <div class="stats-row" id="stats-row">
@@ -54,16 +61,6 @@ async function renderDashboard(container, date) {
       </div>
     </div>
   `;
-
-  // Date navigation
-  document.getElementById('prev-date').addEventListener('click', () => {
-    currentDate = prevDate(currentDate);
-    switchView('dashboard');
-  });
-  document.getElementById('next-date').addEventListener('click', () => {
-    currentDate = nextDate(currentDate);
-    switchView('dashboard');
-  });
 
   // Manual entry form — restore draft from localStorage
   const draftKey = 'manual-entry-draft';

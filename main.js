@@ -3,8 +3,6 @@ const path = require('path');
 const db = require('./src/db');
 const tracker = require('./src/tracker');
 const { createTray } = require('./src/tray');
-const { generateDailySummary, generateMorningBriefing, generateWeeklyReport } = require('./src/ai-summary');
-
 let mainWindow = null;
 let tray = null;
 
@@ -49,15 +47,6 @@ function registerIPC() {
     db.saveJournalNote(date, note);
   });
 
-  ipcMain.handle('generate-summary', async (_event, date) => {
-    try {
-      const summary = await generateDailySummary(date);
-      return { summary };
-    } catch (err) {
-      return { error: err.message };
-    }
-  });
-
   ipcMain.handle('get-settings', () => {
     return db.getSettings();
   });
@@ -98,15 +87,6 @@ function registerIPC() {
 
   // --- v2: Briefing, Stats, Categories ---
 
-  ipcMain.handle('get-morning-briefing', async (_event, date) => {
-    try {
-      const briefing = await generateMorningBriefing(date);
-      return { briefing };
-    } catch (err) {
-      return { error: err.message };
-    }
-  });
-
   ipcMain.handle('get-daily-stats', (_event, date) => {
     return db.getDailyStats(date);
   });
@@ -131,14 +111,6 @@ function registerIPC() {
     db.addCategoryRule(processName, titlePattern, category);
   });
 
-  ipcMain.handle('generate-weekly-report', async (_event, weekEndDate) => {
-    try {
-      const report = await generateWeeklyReport(weekEndDate);
-      return { report };
-    } catch (err) {
-      return { error: err.message };
-    }
-  });
 }
 
 app.whenReady().then(async () => {

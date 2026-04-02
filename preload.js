@@ -4,7 +4,6 @@ contextBridge.exposeInMainWorld('api', {
   getDaySummary: (date) => ipcRenderer.invoke('get-day-summary', date),
   getJournal: (date) => ipcRenderer.invoke('get-journal', date),
   saveJournalNote: (date, note) => ipcRenderer.invoke('save-journal-note', date, note),
-  generateSummary: (date) => ipcRenderer.invoke('generate-summary', date),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   getAppDetails: (date, processName) =>
@@ -18,8 +17,7 @@ contextBridge.exposeInMainWorld('api', {
   getTrackingStatus: () => ipcRenderer.invoke('get-tracking-status'),
   toggleTracking: () => ipcRenderer.invoke('toggle-tracking'),
 
-  // v2: Briefing, Stats, Categories
-  getMorningBriefing: (date) => ipcRenderer.invoke('get-morning-briefing', date),
+  // v2: Stats, Categories
   getDailyStats: (date) => ipcRenderer.invoke('get-daily-stats', date),
   getWeeklyStats: (endDate) => ipcRenderer.invoke('get-weekly-stats', endDate),
   getMonthlyStats: (yearMonth) => ipcRenderer.invoke('get-monthly-stats', yearMonth),
@@ -27,5 +25,4 @@ contextBridge.exposeInMainWorld('api', {
   updateCategory: (id, category) => ipcRenderer.invoke('update-category', id, category),
   addCategoryRule: (processName, titlePattern, category) =>
     ipcRenderer.invoke('add-category-rule', processName, titlePattern, category),
-  generateWeeklyReport: (weekEndDate) => ipcRenderer.invoke('generate-weekly-report', weekEndDate),
 });

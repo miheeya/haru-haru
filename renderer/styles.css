@@ -147,6 +147,8 @@ body {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  position: relative;
+  z-index: 10;
 }
 
 .date-nav button:hover {

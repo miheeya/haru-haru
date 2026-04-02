@@ -90,9 +90,6 @@ async function initDB() {
     )
   `);
 
-  // Add briefing_json column to daily_summary (safe if already exists)
-  try { db.run('ALTER TABLE daily_summary ADD COLUMN briefing_json TEXT'); } catch {}
-
   // Seed default category rules
   const defaultRules = [
     ['Code', null, '개발'], ['code', null, '개발'],
@@ -123,8 +120,9 @@ async function initDB() {
   saveDB();
 }
 
-// Flush DB to disk immediately
+// Flush DB to disk immediately (cancels any pending scheduled save)
 function saveDB() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
   if (db && dbPath) {
     const data = db.export();
     fs.writeFileSync(dbPath, Buffer.from(data));
@@ -200,7 +198,7 @@ function getJournal(date) {
     || { ai_summary: null, user_notes: '' };
 }
 
-const ALLOWED_SUMMARY_COLUMNS = ['ai_summary', 'user_notes', 'briefing_json'];
+const ALLOWED_SUMMARY_COLUMNS = ['user_notes'];
 
 function upsertDailySummaryColumn(date, column, value) {
   if (!ALLOWED_SUMMARY_COLUMNS.includes(column)) {
@@ -218,10 +216,6 @@ function upsertDailySummaryColumn(date, column, value) {
 
 function saveJournalNote(date, note) {
   upsertDailySummaryColumn(date, 'user_notes', note);
-}
-
-function saveAiSummary(date, summary) {
-  upsertDailySummaryColumn(date, 'ai_summary', summary);
 }
 
 function getSettings() {
@@ -506,28 +500,13 @@ function getMonthlyStats(yearMonth) {
   }));
 }
 
-// --- Briefing ---
-
-function saveBriefing(date, briefingJson) {
-  upsertDailySummaryColumn(date, 'briefing_json', JSON.stringify(briefingJson));
-}
-
-function getBriefing(date) {
-  const row = queryOne('SELECT briefing_json FROM daily_summary WHERE date = ?', [date]);
-  if (row && row.briefing_json) {
-    try { return JSON.parse(row.briefing_json); } catch { return null; }
-  }
-  return null;
-}
-
 module.exports = {
   initDB, saveDB,
   insertActivity, insertManualActivity, updateManualActivity, deleteActivity,
   getDaySummary, getDayActivities, getAppDetails,
-  getJournal, saveJournalNote, saveAiSummary,
+  getJournal, saveJournalNote,
   getSettings, saveSettings,
   // v2
   classifyActivity, getCategoryMap, updateCategory, addCategoryRule,
-  calculateFocusScore, getDailyStats, getWeeklyStats, getMonthlyStats,
-  saveBriefing, getBriefing
+  calculateFocusScore, getDailyStats, getWeeklyStats, getMonthlyStats
 };

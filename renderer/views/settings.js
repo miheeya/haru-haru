@@ -5,17 +5,6 @@ async function renderSettings(container) {
     <h2 style="margin-bottom: 24px">설정</h2>
 
     <div class="settings-group">
-      <h3>Claude API</h3>
-      <div class="setting-item">
-        <div>
-          <div class="setting-label">API 키</div>
-          <div class="setting-desc">AI 요약 생성에 사용됩니다. Anthropic Console에서 발급받으세요.</div>
-        </div>
-        <input type="password" id="setting-api-key" value="${esc(settings.api_key || '')}" placeholder="sk-ant-...">
-      </div>
-    </div>
-
-    <div class="settings-group">
       <h3>추적 설정</h3>
       <div class="setting-item">
         <div>
@@ -41,7 +30,6 @@ async function renderSettings(container) {
 
   document.getElementById('save-settings-btn').addEventListener('click', async () => {
     const newSettings = {
-      api_key: document.getElementById('setting-api-key').value,
       poll_interval_sec: document.getElementById('setting-poll-interval').value,
       idle_threshold_sec: document.getElementById('setting-idle-threshold').value
     };

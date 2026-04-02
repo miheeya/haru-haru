@@ -1,8 +1,6 @@
-// HTML escape to prevent XSS
+// HTML escape to prevent XSS (no DOM allocation)
 function esc(str) {
-  const el = document.createElement('span');
-  el.textContent = str;
-  return el.innerHTML;
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // Current state
@@ -60,6 +58,8 @@ function prevDate(dateStr) {
 }
 
 function nextDate(dateStr) {
+  const today = new Date().toISOString().split('T')[0];
+  if (dateStr >= today) return dateStr; // 오늘 이후로는 이동 불가
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
   return d.toISOString().split('T')[0];
@@ -89,16 +89,72 @@ document.getElementById('tracking-status').addEventListener('click', async () =>
   updateTrackingStatus();
 });
 
+// Date navigation — single event delegation handler for ALL views
+document.getElementById('content').addEventListener('click', (e) => {
+  // DEBUG: 화면에 클릭 정보 표시
+  const dbg = document.getElementById('debug-log');
+  const tag = e.target.tagName;
+  const nav = e.target.dataset?.nav || e.target.closest('[data-nav]')?.dataset?.nav || 'none';
+  const disabled = e.target.closest('[data-nav]')?.disabled;
+  if (dbg) dbg.textContent = `CLICK: <${tag}> nav=${nav} disabled=${disabled} | ${new Date().toLocaleTimeString()}`;
+
+  const btn = e.target.closest('[data-nav]');
+  if (!btn || btn.disabled) return;
+
+  const navAction = btn.dataset.nav;
+  const view = btn.dataset.view;
+
+  if (navAction === 'prev' && view) {
+    currentDate = prevDate(currentDate);
+    switchView(view);
+  } else if (navAction === 'next' && view) {
+    currentDate = nextDate(currentDate);
+    switchView(view);
+  } else if (navAction === 'trend-prev' && window._trendState) {
+    window._trendState.prev();
+  } else if (navAction === 'trend-next' && window._trendState) {
+    window._trendState.next();
+  }
+});
+
 // Init
 updateTrackingStatus();
 switchView('briefing');
 
-// Auto-refresh dashboard every 30s (skip if user is typing)
+// Auto-refresh: only update stats text, not full re-render (preserves scroll, accordion, focus)
+let lastSummaryJson = '';
+
+async function softRefreshDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  if (currentDate !== today) return; // only auto-refresh today's view
+
+  try {
+    const data = await window.api.getDaySummary(currentDate);
+    const newJson = JSON.stringify(data);
+    if (newJson === lastSummaryJson) return; // no change
+    lastSummaryJson = newJson;
+
+    // Update stat cards if they exist
+    const totalTimeEl = document.getElementById('total-time');
+    const appCountEl = document.getElementById('app-count');
+    const topAppEl = document.getElementById('top-app');
+    if (!totalTimeEl) return; // not on dashboard
+
+    if (data.apps && data.apps.length > 0) {
+      const totalHours = Math.floor(data.totalSec / 3600);
+      const totalMins = Math.floor((data.totalSec % 3600) / 60);
+      totalTimeEl.innerHTML = totalHours > 0
+        ? `${totalHours}<span class="unit">h</span> ${totalMins}<span class="unit">m</span>`
+        : `${totalMins}<span class="unit">m</span>`;
+      appCountEl.textContent = data.apps.length;
+      topAppEl.textContent = data.apps[0].name;
+    }
+  } catch {}
+}
+
 setInterval(() => {
-  const active = document.activeElement;
-  const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
-  if (currentView === 'dashboard' && !isTyping) {
-    switchView('dashboard');
+  if (currentView === 'dashboard') {
+    softRefreshDashboard();
   }
   updateTrackingStatus();
 }, 30000);

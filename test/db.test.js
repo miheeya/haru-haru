@@ -249,7 +249,7 @@ describe('settings', () => {
   });
 
   it('설정 저장 및 조회', () => {
-    db.run("INSERT INTO settings VALUES ('api_key','sk-test') ON CONFLICT(key) DO UPDATE SET value='sk-test'");
-    expect(getSettings().api_key).toBe('sk-test');
+    db.run("INSERT INTO settings VALUES ('custom_key','custom_value') ON CONFLICT(key) DO UPDATE SET value='custom_value'");
+    expect(getSettings().custom_key).toBe('custom_value');
   });
 });
