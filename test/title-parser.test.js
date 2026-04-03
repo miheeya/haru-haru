@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { parseTitle } = require('../src/title-parser');
+const { parseTitle, getDisplayName } = require('../src/title-parser');
 
 describe('parseTitle', () => {
   describe('빈 입력 처리', () => {
@@ -154,5 +154,35 @@ describe('parseTitle', () => {
       expect(parseTitle('calc', '계산기'))
         .toBe('계산기');
     });
+  });
+});
+
+describe('getDisplayName', () => {
+  it('Code → Visual Studio Code', () => {
+    expect(getDisplayName('Code')).toBe('Visual Studio Code');
+  });
+
+  it('explorer → 파일 탐색기', () => {
+    expect(getDisplayName('explorer')).toBe('파일 탐색기');
+  });
+
+  it('ShellExperienceHost → Windows 앱 (계산기 등)', () => {
+    expect(getDisplayName('ShellExperienceHost')).toBe('Windows 앱 (계산기 등)');
+  });
+
+  it('KakaoWork → 카카오워크', () => {
+    expect(getDisplayName('KakaoWork')).toBe('카카오워크');
+  });
+
+  it('chrome → Chrome', () => {
+    expect(getDisplayName('chrome')).toBe('Chrome');
+  });
+
+  it('WindowsTerminal → 터미널', () => {
+    expect(getDisplayName('WindowsTerminal')).toBe('터미널');
+  });
+
+  it('매핑에 없는 프로세스명은 원본 그대로 반환', () => {
+    expect(getDisplayName('SomeUnknownApp')).toBe('SomeUnknownApp');
   });
 });

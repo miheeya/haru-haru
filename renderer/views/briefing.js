@@ -16,20 +16,20 @@ async function renderBriefing(container, date) {
 
     <div class="stats-row" id="briefing-stats">
       <div class="stat-card">
-        <div class="label">집중 점수</div>
+        <h4 class="label">집중 점수</h4>
         <div class="value" id="b-focus-score">-</div>
         <div class="stat-sub" id="b-focus-sub"></div>
       </div>
       <div class="stat-card">
-        <div class="label">총 활동 시간</div>
+        <h4 class="label">총 활동 시간</h4>
         <div class="value" id="b-total-time">-</div>
       </div>
       <div class="stat-card">
-        <div class="label">딥워크</div>
+        <h4 class="label">딥워크</h4>
         <div class="value" id="b-deep-work">-</div>
       </div>
       <div class="stat-card">
-        <div class="label">앱 수</div>
+        <h4 class="label">앱 수</h4>
         <div class="value" id="b-app-count">-</div>
       </div>
     </div>

@@ -3,3 +3,5 @@ data/
 *.db
 .claude/
 harux2/
+dist/
+release/

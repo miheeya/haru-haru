@@ -138,4 +138,38 @@ function categorizeByTitle(processName, windowTitle) {
   return '기타';
 }
 
-module.exports = { parseTitle, categorizeByTitle };
+// Process name → user-friendly display name
+const PROCESS_DISPLAY_NAMES = {
+  // 브라우저
+  'chrome': 'Chrome', 'msedge': 'Edge', 'firefox': 'Firefox',
+  'brave': 'Brave', 'opera': 'Opera', 'vivaldi': 'Vivaldi',
+  // 개발 도구
+  'Code': 'Visual Studio Code', 'WindowsTerminal': '터미널',
+  'powershell': 'PowerShell', 'pwsh': 'PowerShell',
+  'cmd': '명령 프롬프트', 'bash': 'Bash', 'mintty': 'Git Bash',
+  // 커뮤니케이션
+  'KakaoWork': '카카오워크', 'KakaoTalk': '카카오톡',
+  'slack': 'Slack', 'discord': 'Discord',
+  'Teams': 'Microsoft Teams', 'Zoom': 'Zoom',
+  // 문서/생산성
+  'notion': 'Notion', 'Obsidian': 'Obsidian',
+  'WINWORD': 'Word', 'EXCEL': 'Excel',
+  'POWERPNT': 'PowerPoint', 'ONENOTE': 'OneNote',
+  // Windows 시스템
+  'explorer': '파일 탐색기',
+  'ShellExperienceHost': 'Windows 앱 (계산기 등)',
+  'ApplicationFrameHost': 'Windows 앱',
+  'SearchHost': 'Windows 검색',
+  'SystemSettings': '설정',
+  'Taskmgr': '작업 관리자',
+  // 기타
+  'electron': 'Electron 앱',
+  'Notepad': '메모장', 'mspaint': '그림판',
+  'picpick': 'PicPick', 'claude': 'Claude',
+};
+
+function getDisplayName(processName) {
+  return PROCESS_DISPLAY_NAMES[processName] || processName;
+}
+
+module.exports = { parseTitle, categorizeByTitle, getDisplayName };

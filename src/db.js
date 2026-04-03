@@ -2,7 +2,7 @@ const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
-const { parseTitle, categorizeByTitle } = require('./title-parser');
+const { parseTitle, categorizeByTitle, getDisplayName } = require('./title-parser');
 
 let db = null;
 let dbPath = null;
@@ -182,6 +182,7 @@ function getDaySummary(date) {
   const totalSec = rows.reduce((sum, r) => sum + r.totalSec, 0);
   const apps = rows.map(r => ({
     ...r,
+    displayName: getDisplayName(r.name),
     percentage: totalSec > 0 ? Math.round((r.totalSec / totalSec) * 100) : 0
   }));
 
@@ -556,5 +557,32 @@ module.exports = {
   // v2
   classifyActivity, getCategoryMap, updateCategory, addCategoryRule,
   calculateFocusScore, getDailyStats, getWeeklyStats, getMonthlyStats,
-  getIdleGaps
+  getIdleGaps,
+  resetAllData,
+  exportActivityLog,
+  exportDailySummary
 };
+
+function exportActivityLog() {
+  return queryAll(`
+    SELECT timestamp, process_name, window_title, duration_sec, is_manual
+    FROM activity_log
+    ORDER BY timestamp ASC
+  `);
+}
+
+function exportDailySummary() {
+  return queryAll(`
+    SELECT date(timestamp, 'localtime') AS date, process_name, SUM(duration_sec) AS total_sec
+    FROM activity_log
+    GROUP BY date(timestamp, 'localtime'), process_name
+    ORDER BY date ASC, total_sec DESC
+  `);
+}
+
+function resetAllData() {
+  db.run('DELETE FROM activity_log');
+  db.run('DELETE FROM daily_summary');
+  db.run('DELETE FROM daily_stats');
+  saveDB();
+}

@@ -3,17 +3,49 @@
   "version": "0.1.0",
   "description": "Daily activity tracker with focus score and productivity insights",
   "main": "main.js",
+  "author": "haru-haru",
   "scripts": {
     "start": "electron .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dist": "electron-builder"
+    "build": "electron-builder --win --dir",
+    "build:installer": "electron-builder --win"
   },
   "dependencies": {
     "sql.js": "^1.11.0"
   },
   "devDependencies": {
     "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
     "vitest": "^4.1.2"
+  },
+  "build": {
+    "directories": {
+      "output": "release",
+      "app": "."
+    },
+    "appId": "com.haruharu.app",
+    "productName": "하루하루",
+    "win": {
+      "target": "dir",
+      "icon": "assets/icon.png",
+      "signAndEditExecutable": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "!test/**",
+      "!vitest.config.js",
+      "!**/*.test.js"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/sql.js/dist/sql-wasm.wasm",
+        "to": "sql-wasm.wasm"
+      }
+    ]
   }
 }

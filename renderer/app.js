@@ -53,6 +53,9 @@ function switchView(view) {
     case 'settings':
       renderSettings(content);
       break;
+    case 'help':
+      renderHelp(content);
+      break;
   }
 }
 

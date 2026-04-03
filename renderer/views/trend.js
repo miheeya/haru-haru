@@ -20,16 +20,16 @@ async function renderTrend(container, date) {
 
     <div class="stats-row" id="trend-stats">
       <div class="stat-card">
-        <div class="label">주간 평균 점수</div>
+        <h4 class="label">주간 평균 점수</h4>
         <div class="value" id="t-avg-score">-</div>
         <div class="stat-desc">개발/문서 작업에 15분 이상 연속 집중한 비율</div>
       </div>
       <div class="stat-card">
-        <div class="label">주간 총 활동</div>
+        <h4 class="label">주간 총 활동</h4>
         <div class="value" id="t-total-time">-</div>
       </div>
       <div class="stat-card">
-        <div class="label">최고 점수 날</div>
+        <h4 class="label">최고 점수 날</h4>
         <div class="value" id="t-best-day" style="font-size:16px">-</div>
       </div>
     </div>

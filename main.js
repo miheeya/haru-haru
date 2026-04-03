@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const fs = require('fs');
 const path = require('path');
 const db = require('./src/db');
 const tracker = require('./src/tracker');
@@ -21,6 +22,20 @@ function createWindow() {
   });
 
   mainWindow.loadFile('renderer/index.html');
+
+  // Zoom: Ctrl+= zoom in, Ctrl+0 reset (Ctrl+- already works via Electron default)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && !input.alt && input.type === 'keyDown') {
+      // Use input.code (physical key) to avoid keyboard layout issues
+      if (input.code === 'Equal' || input.code === 'NumpadAdd') {
+        mainWindow.webContents.setZoomLevel(mainWindow.webContents.getZoomLevel() + 0.5);
+        event.preventDefault();
+      } else if (input.code === 'Digit0' || input.code === 'Numpad0') {
+        mainWindow.webContents.setZoomLevel(0);
+        event.preventDefault();
+      }
+    }
+  });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -53,6 +68,41 @@ function registerIPC() {
 
   ipcMain.handle('save-todos', (_event, date, todos) => {
     db.saveTodos(date, todos);
+  });
+
+  ipcMain.handle('export-data', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '내보내기 폴더 선택',
+      properties: ['openDirectory']
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+
+    const dir = result.filePaths[0];
+    const today = new Date().toISOString().split('T')[0];
+    const BOM = '\uFEFF';
+
+    // Activity log CSV
+    const logs = db.exportActivityLog();
+    const logCsv = BOM + '날짜시간,앱,창 제목,사용시간(초),직접입력\n' +
+      logs.map(r => `"${r.timestamp}","${(r.process_name || '').replace(/"/g, '""')}","${(r.window_title || '').replace(/"/g, '""')}",${r.duration_sec},${r.is_manual ? '예' : '아니오'}`).join('\n');
+    fs.writeFileSync(path.join(dir, `하루하루_활동로그_${today}.csv`), logCsv, 'utf8');
+
+    // Daily summary CSV
+    const summary = db.exportDailySummary();
+    const sumCsv = BOM + '날짜,앱,사용시간(초),사용시간\n' +
+      summary.map(r => {
+        const h = Math.floor(r.total_sec / 3600);
+        const m = Math.floor((r.total_sec % 3600) / 60);
+        const timeStr = h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+        return `"${r.date}","${(r.process_name || '').replace(/"/g, '""')}",${r.total_sec},"${timeStr}"`;
+      }).join('\n');
+    fs.writeFileSync(path.join(dir, `하루하루_일별요약_${today}.csv`), sumCsv, 'utf8');
+
+    return { success: true, dir, fileCount: 2 };
+  });
+
+  ipcMain.handle('reset-all-data', () => {
+    db.resetAllData();
   });
 
   ipcMain.handle('get-settings', () => {

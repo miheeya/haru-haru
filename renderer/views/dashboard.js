@@ -15,15 +15,15 @@ async function renderDashboard(container, date) {
     </div>
     <div class="stats-row" id="stats-row">
       <div class="stat-card" role="group" aria-label="총 사용 시간">
-        <div class="label" id="label-total-time">총 사용 시간</div>
+        <h4 class="label" id="label-total-time">총 사용 시간</h4>
         <div class="value" id="total-time" aria-labelledby="label-total-time">-</div>
       </div>
       <div class="stat-card" role="group" aria-label="사용한 앱 수">
-        <div class="label" id="label-app-count">사용한 앱 수</div>
+        <h4 class="label" id="label-app-count">사용한 앱 수</h4>
         <div class="value" id="app-count" aria-labelledby="label-app-count">-</div>
       </div>
       <div class="stat-card" role="group" aria-label="가장 많이 사용한 앱">
-        <div class="label" id="label-top-app">가장 많이 사용</div>
+        <h4 class="label" id="label-top-app">가장 많이 사용</h4>
         <div class="value" id="top-app" style="font-size:18px" aria-labelledby="label-top-app">-</div>
       </div>
     </div>
@@ -115,13 +115,15 @@ async function renderDashboard(container, date) {
   });
 
   // Fetch data
-  const [data, idleGaps] = await Promise.all([
+  const [data, idleGaps, settings] = await Promise.all([
     window.api.getDaySummary(date),
-    window.api.getIdleGaps(date)
+    window.api.getIdleGaps(date),
+    window.api.getSettings()
   ]);
+  const idleThresholdMin = Math.round((parseInt(settings.idle_threshold_sec) || 300) / 60);
 
   // Render idle gaps
-  renderIdleGaps(idleGaps);
+  renderIdleGaps(idleGaps, idleThresholdMin);
 
   if (!data.apps || data.apps.length === 0) {
     document.getElementById('total-time').textContent = '0m';
@@ -144,7 +146,7 @@ async function renderDashboard(container, date) {
       ? `${totalHours}<span class="unit">h</span> ${totalMins}<span class="unit">m</span>`
       : `${totalMins}<span class="unit">m</span>`;
   document.getElementById('app-count').textContent = data.apps.length;
-  document.getElementById('top-app').textContent = data.apps[0].name;
+  document.getElementById('top-app').textContent = data.apps[0].displayName;
 
   // Chart
   const top10 = data.apps.slice(0, 10);
@@ -161,7 +163,7 @@ async function renderDashboard(container, date) {
   dashboardChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: top10.map(a => a.name),
+      labels: top10.map(a => a.displayName),
       datasets: [{
         data: top10.map(a => Math.round(a.totalSec / 60)),
         backgroundColor: colors.slice(0, top10.length),
@@ -216,17 +218,17 @@ async function renderDashboard(container, date) {
     row.setAttribute('role', 'listitem');
     row.setAttribute('tabindex', '0');
     row.setAttribute('aria-expanded', 'false');
-    row.setAttribute('aria-label', `${appItem.name}, ${formatTime(appItem.totalSec)}, ${appItem.percentage}%`);
+    row.setAttribute('aria-label', `${appItem.displayName}, ${formatTime(appItem.totalSec)}, ${appItem.percentage}%`);
     row.innerHTML = `
       <div>
         <span class="expand-arrow" aria-hidden="true">▶</span>
-        <span class="app-name">${esc(appItem.name)}</span>
-        <div class="progress-bar" role="progressbar" aria-valuenow="${appItem.percentage}" aria-valuemin="0" aria-valuemax="100" aria-label="${appItem.name} ${appItem.percentage}%"><div class="fill" style="width: ${appItem.percentage}%"></div></div>
+        <span class="app-name">${esc(appItem.displayName)}</span>
+        <div class="progress-bar" role="progressbar" aria-valuenow="${appItem.percentage}" aria-valuemin="0" aria-valuemax="100" aria-label="${appItem.displayName} ${appItem.percentage}%"><div class="fill" style="width: ${appItem.percentage}%"></div></div>
       </div>
       <div class="time">${formatTime(appItem.totalSec)}</div>
       <div class="pct-cell">
         <span class="pct">${appItem.percentage}%</span>
-        <button class="delete-btn" aria-label="${appItem.name} 삭제">&times;</button>
+        <button class="delete-btn" aria-label="${appItem.displayName} 삭제">&times;</button>
       </div>
     `;
 
@@ -240,7 +242,7 @@ async function renderDashboard(container, date) {
     // Delete button
     row.querySelector('.delete-btn').addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (confirm(`"${appItem.name}" 항목의 오늘 기록을 모두 삭제할까요?`)) {
+      if (confirm(`"${appItem.displayName}" 항목의 오늘 기록을 모두 삭제할까요?`)) {
         await window.api.deleteActivity(appItem.name, date);
         switchView('dashboard');
       }
@@ -348,6 +350,9 @@ async function renderDashboard(container, date) {
             const restSec = rest.reduce((sum, d) => sum + d.totalSec, 0);
             const restRow = document.createElement('div');
             restRow.className = 'detail-row detail-row-expand';
+            restRow.setAttribute('tabindex', '0');
+            restRow.setAttribute('role', 'button');
+            restRow.setAttribute('aria-label', `나머지 ${rest.length}건 더 보기`);
             restRow.innerHTML = `
               <div class="detail-label">
                 <span class="tree-branch">└</span>
@@ -355,16 +360,22 @@ async function renderDashboard(container, date) {
               </div>
               <div class="detail-time">${formatTime(restSec)}</div>
             `;
-            restRow.addEventListener('click', (ev) => {
+            function expandRest(ev) {
               ev.stopPropagation();
+              if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+              if (ev.type === 'keydown') ev.preventDefault();
               showAll = true;
               renderDetails();
-            });
+            }
+            restRow.addEventListener('click', expandRest);
+            restRow.addEventListener('keydown', expandRest);
             detailsContainer.appendChild(restRow);
           } else if (showAll && result.details.length > maxShow) {
-            // "접기" 버튼
             const collapseRow = document.createElement('div');
             collapseRow.className = 'detail-row detail-row-expand';
+            collapseRow.setAttribute('tabindex', '0');
+            collapseRow.setAttribute('role', 'button');
+            collapseRow.setAttribute('aria-label', '접기');
             collapseRow.innerHTML = `
               <div class="detail-label">
                 <span class="tree-branch">└</span>
@@ -372,11 +383,15 @@ async function renderDashboard(container, date) {
               </div>
               <div class="detail-time"></div>
             `;
-            collapseRow.addEventListener('click', (ev) => {
+            function collapseDetails(ev) {
               ev.stopPropagation();
+              if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+              if (ev.type === 'keydown') ev.preventDefault();
               showAll = false;
               renderDetails();
-            });
+            }
+            collapseRow.addEventListener('click', collapseDetails);
+            collapseRow.addEventListener('keydown', collapseDetails);
             detailsContainer.appendChild(collapseRow);
           }
         }
@@ -395,7 +410,7 @@ async function renderDashboard(container, date) {
   }
 }
 
-function renderIdleGaps(gaps) {
+function renderIdleGaps(gaps, thresholdMin = 10) {
   const section = document.getElementById('idle-gaps-section');
   if (!gaps || gaps.length === 0) {
     section.innerHTML = '';
@@ -420,7 +435,7 @@ function renderIdleGaps(gaps) {
   section.innerHTML = `
     <div class="idle-gaps-card">
       <div class="flex-between mb-12">
-        <h3>자리비움 (10분 이상)</h3>
+        <h3>자리비움 (${thresholdMin}분 이상)</h3>
         <span class="idle-gap-total">총 ${formatTime(totalIdleSec)}</span>
       </div>
       ${rows}
