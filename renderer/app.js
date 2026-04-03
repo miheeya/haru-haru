@@ -25,6 +25,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 function switchView(view) {
   currentView = view;
+  lastSummaryJson = ''; // reset stale cache on view switch
 
   // Update nav + aria-selected
   document.querySelectorAll('.nav-item').forEach(el => {

@@ -128,7 +128,6 @@ async function initDB() {
   saveDB();
 }
 
-// Flush DB to disk immediately (cancels any pending scheduled save)
 function saveDB() {
   if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
   if (db && dbPath) {
@@ -137,7 +136,6 @@ function saveDB() {
   }
 }
 
-// Debounced save: flushes at most once every 30 seconds (for high-frequency inserts)
 function scheduleSave() {
   if (saveTimer) return;
   saveTimer = setTimeout(() => {
@@ -146,7 +144,6 @@ function scheduleSave() {
   }, 30000);
 }
 
-// Reusable query helpers
 function queryAll(sql, params = []) {
   const stmt = db.prepare(sql);
   stmt.bind(params);
@@ -219,7 +216,7 @@ function upsertDailySummaryColumn(date, column, value) {
      ON CONFLICT(date) DO UPDATE SET ${column} = ?, updated_at = ?`,
     [date, value, now, now, value, now]
   );
-  saveDB();
+  scheduleSave();
 }
 
 function saveJournalNote(date, note) {
@@ -383,34 +380,34 @@ function calculateFocusScore(date) {
 
   if (activities.length === 0) return { focusScore: null, totalSec: 0, deepWorkSec: 0, breakdown: {} };
 
-  // Calculate category breakdown
+  // Classify once per activity (avoid double SQL queries)
+  const classified = activities.map(act => ({
+    ...act,
+    category: classifyActivity(act.process_name, act.window_title)
+  }));
+
   const breakdown = {};
   let totalSec = 0;
-  for (const act of activities) {
-    const cat = classifyActivity(act.process_name, act.window_title);
-    breakdown[cat] = (breakdown[cat] || 0) + act.duration_sec;
+  for (const act of classified) {
+    breakdown[act.category] = (breakdown[act.category] || 0) + act.duration_sec;
     totalSec += act.duration_sec;
   }
 
-  // Not enough data for a meaningful score
   if (totalSec < MIN_ACTIVITY_FOR_SCORE_SEC) {
     return { focusScore: null, totalSec, deepWorkSec: 0, breakdown };
   }
 
-  // Calculate deep work blocks
-  // Deep work = '개발' or '문서' category, in blocks of 15min+ (with 2min gap tolerance)
   const DEEP_CATEGORIES = new Set(['개발', '문서']);
-  const GAP_TOLERANCE_SEC = 120; // 2 minutes
-  const MIN_BLOCK_SEC = 900; // 15 minutes
+  const GAP_TOLERANCE_SEC = 120;
+  const MIN_BLOCK_SEC = 900;
 
   let blocks = [];
   let currentBlockSec = 0;
   let gapSec = 0;
   let inDeepWork = false;
 
-  for (const act of activities) {
-    const cat = classifyActivity(act.process_name, act.window_title);
-    const isDeep = DEEP_CATEGORIES.has(cat);
+  for (const act of classified) {
+    const isDeep = DEEP_CATEGORIES.has(act.category);
 
     if (isDeep) {
       if (inDeepWork) {
