@@ -33,7 +33,6 @@ async function renderDashboard(container, date) {
         <canvas id="usage-chart" aria-label="앱별 사용 시간 막대 그래프" role="img"></canvas>
       </div>
     </div>
-    <div id="idle-gaps-section"></div>
     <div class="manual-entry-card">
       <div class="flex-between mb-12">
         <h3>직접 입력</h3>
@@ -61,6 +60,7 @@ async function renderDashboard(container, date) {
         <span style="font-size:12px; color:var(--text-secondary)">항목을 클릭하거나 Enter를 눌러 상세 내역 표시</span>
       </div>
     </div>
+    <div id="idle-gaps-section"></div>
   `;
 
   // Manual entry form — restore draft from localStorage

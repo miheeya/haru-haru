@@ -22,6 +22,7 @@ async function renderTrend(container, date) {
       <div class="stat-card">
         <div class="label">주간 평균 점수</div>
         <div class="value" id="t-avg-score">-</div>
+        <div class="stat-desc">개발/문서 작업에 15분 이상 연속 집중한 비율</div>
       </div>
       <div class="stat-card">
         <div class="label">주간 총 활동</div>

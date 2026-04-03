@@ -565,6 +565,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
+  margin-top: 24px;
   margin-bottom: 24px;
 }
 
@@ -899,6 +900,13 @@ body {
 
 /* === v2: Briefing styles === */
 
+.briefing-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
 .briefing-card {
   background: linear-gradient(135deg, #1e3a5f 0%, var(--bg-card) 100%);
   border: 1px solid rgba(66, 133, 244, 0.2);
@@ -1002,6 +1010,13 @@ body {
 
 .stat-sub.up { color: var(--green); }
 .stat-sub.down { color: var(--red); }
+
+.stat-desc {
+  font-size: 11px;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
 
 .weekly-sparkline {
   background: var(--bg-card);

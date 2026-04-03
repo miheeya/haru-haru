@@ -11,6 +11,7 @@ function toLocalDateStr(d) {
 // Current state
 let currentView = 'briefing';
 let currentDate = toLocalDateStr(new Date());
+let lastSummaryJson = '';
 
 // Navigation — click + keyboard (Enter/Space)
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -128,7 +129,6 @@ updateTrackingStatus();
 switchView('briefing');
 
 // Auto-refresh: only update stats text, not full re-render
-let lastSummaryJson = '';
 
 async function softRefreshDashboard() {
   const today = toLocalDateStr(new Date());

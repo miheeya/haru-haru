@@ -4,13 +4,15 @@ async function renderBriefing(container, date) {
 
   container.innerHTML = `
     <div class="dashboard-header">
-      <h2>☀️ 오늘의 브리핑</h2>
+      <h2>☀️ 아침 브리핑</h2>
       <div class="date-nav">
         <button data-nav="prev" data-view="briefing">&lt;</button>
         <span class="current-date">${formatDate(date)}</span>
         <button data-nav="next" data-view="briefing" ${isToday ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&gt;</button>
       </div>
     </div>
+
+    <div class="briefing-desc">전날의 활동 데이터를 바탕으로 집중 점수, 카테고리별 시간 배분, 주간 흐름을 한눈에 보여줍니다.</div>
 
     <div class="stats-row" id="briefing-stats">
       <div class="stat-card">
