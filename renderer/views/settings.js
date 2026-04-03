@@ -15,10 +15,10 @@ async function renderSettings(container) {
       </div>
       <div class="setting-item">
         <div>
-          <div class="setting-label">유휴 감지 (초)</div>
+          <div class="setting-label">유휴 감지 (분)</div>
           <div class="setting-desc">이 시간 동안 변화가 없으면 유휴 상태로 간주합니다.</div>
         </div>
-        <input type="number" id="setting-idle-threshold" value="${esc(settings.idle_threshold_sec || '300')}" min="60" max="3600">
+        <input type="number" id="setting-idle-threshold" value="${Math.round((parseInt(settings.idle_threshold_sec) || 300) / 60)}" min="1" max="60">
       </div>
     </div>
 
@@ -31,7 +31,7 @@ async function renderSettings(container) {
   document.getElementById('save-settings-btn').addEventListener('click', async () => {
     const newSettings = {
       poll_interval_sec: document.getElementById('setting-poll-interval').value,
-      idle_threshold_sec: document.getElementById('setting-idle-threshold').value
+      idle_threshold_sec: String(parseInt(document.getElementById('setting-idle-threshold').value) * 60)
     };
 
     await window.api.saveSettings(newSettings);

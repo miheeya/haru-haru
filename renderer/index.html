@@ -8,39 +8,42 @@
 </head>
 <body>
   <div class="app">
-    <nav class="sidebar">
+    <nav class="sidebar" aria-label="메인 내비게이션">
       <div class="logo">
-        <h1>하루하루</h1>
+        <div class="logo-row">
+          <img src="../assets/icon.png" class="logo-icon" alt="하루하루 로고">
+          <h1>하루하루</h1>
+        </div>
         <span class="subtitle">Daily Tracker</span>
       </div>
-      <ul class="nav-list">
-        <li class="nav-item active" data-view="briefing">
-          <span class="nav-icon">☀️</span>
+      <ul class="nav-list" role="tablist" aria-label="메뉴">
+        <li class="nav-item active" data-view="briefing" role="tab" tabindex="0" aria-selected="true">
+          <span class="nav-icon" aria-hidden="true">☀️</span>
           <span>아침 브리핑</span>
         </li>
-        <li class="nav-item" data-view="dashboard">
-          <span class="nav-icon">📊</span>
+        <li class="nav-item" data-view="dashboard" role="tab" tabindex="0" aria-selected="false">
+          <span class="nav-icon" aria-hidden="true">📊</span>
           <span>대시보드</span>
         </li>
-        <li class="nav-item" data-view="journal">
-          <span class="nav-icon">📝</span>
+        <li class="nav-item" data-view="journal" role="tab" tabindex="0" aria-selected="false">
+          <span class="nav-icon" aria-hidden="true">📝</span>
           <span>업무 일지</span>
         </li>
-        <li class="nav-item" data-view="trend">
-          <span class="nav-icon">📈</span>
+        <li class="nav-item" data-view="trend" role="tab" tabindex="0" aria-selected="false">
+          <span class="nav-icon" aria-hidden="true">📈</span>
           <span>트렌드</span>
         </li>
-        <li class="nav-item" data-view="settings">
-          <span class="nav-icon">⚙️</span>
+        <li class="nav-item" data-view="settings" role="tab" tabindex="0" aria-selected="false">
+          <span class="nav-icon" aria-hidden="true">⚙️</span>
           <span>설정</span>
         </li>
       </ul>
-      <div class="tracking-status" id="tracking-status">
-        <div class="status-dot active"></div>
+      <button class="tracking-status" id="tracking-status" aria-label="추적 상태 토글">
+        <span class="status-dot active" aria-hidden="true"></span>
         <span>추적 중</span>
-      </div>
+      </button>
     </nav>
-    <main class="content" id="content">
+    <main class="content" id="content" role="tabpanel" aria-live="polite">
       <!-- Views rendered here -->
     </main>
   </div>

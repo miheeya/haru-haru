@@ -7,54 +7,58 @@ async function renderDashboard(container, date) {
   container.innerHTML = `
     <div class="dashboard-header">
       <h2>대시보드</h2>
-      <div class="date-nav">
-        <button data-nav="prev" data-view="dashboard">&lt;</button>
-        <span class="current-date">${formatDate(date)}</span>
-        <button data-nav="next" data-view="dashboard" ${isToday ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&gt;</button>
+      <div class="date-nav" role="navigation" aria-label="날짜 이동">
+        <button data-nav="prev" data-view="dashboard" aria-label="이전 날짜">&lt;</button>
+        <span class="current-date" aria-live="polite">${formatDate(date)}</span>
+        <button data-nav="next" data-view="dashboard" aria-label="다음 날짜" ${isToday ? 'disabled' : ''}>&gt;</button>
       </div>
     </div>
     <div class="stats-row" id="stats-row">
-      <div class="stat-card">
-        <div class="label">총 사용 시간</div>
-        <div class="value" id="total-time">-</div>
+      <div class="stat-card" role="group" aria-label="총 사용 시간">
+        <div class="label" id="label-total-time">총 사용 시간</div>
+        <div class="value" id="total-time" aria-labelledby="label-total-time">-</div>
       </div>
-      <div class="stat-card">
-        <div class="label">사용한 앱 수</div>
-        <div class="value" id="app-count">-</div>
+      <div class="stat-card" role="group" aria-label="사용한 앱 수">
+        <div class="label" id="label-app-count">사용한 앱 수</div>
+        <div class="value" id="app-count" aria-labelledby="label-app-count">-</div>
       </div>
-      <div class="stat-card">
-        <div class="label">가장 많이 사용</div>
-        <div class="value" id="top-app" style="font-size:18px">-</div>
+      <div class="stat-card" role="group" aria-label="가장 많이 사용한 앱">
+        <div class="label" id="label-top-app">가장 많이 사용</div>
+        <div class="value" id="top-app" style="font-size:18px" aria-labelledby="label-top-app">-</div>
       </div>
     </div>
     <div class="chart-container">
       <h3>앱별 사용 시간</h3>
       <div class="chart-wrapper">
-        <canvas id="usage-chart"></canvas>
+        <canvas id="usage-chart" aria-label="앱별 사용 시간 막대 그래프" role="img"></canvas>
       </div>
     </div>
     <div id="idle-gaps-section"></div>
     <div class="manual-entry-card">
       <div class="flex-between mb-12">
         <h3>직접 입력</h3>
-        <span class="save-indicator" id="manual-save-status">추가됨!</span>
+        <span class="save-indicator" id="manual-save-status" aria-live="polite">추가됨!</span>
       </div>
-      <form id="manual-entry-form" class="manual-entry-form">
+      <form id="manual-entry-form" class="manual-entry-form" aria-label="활동 직접 입력">
+        <label for="manual-app" class="sr-only">앱/사이트 이름</label>
         <input type="text" id="manual-app" placeholder="앱/사이트 이름 (예: Notion)" required>
+        <label for="manual-title" class="sr-only">상세 내용</label>
         <input type="text" id="manual-title" placeholder="상세 내용 (예: 프로젝트 기획서 작성)">
         <div class="duration-input">
-          <input type="number" id="manual-hours" min="0" max="23" value="0" placeholder="0">
-          <span class="duration-label">시간</span>
-          <input type="number" id="manual-minutes" min="0" max="59" value="30" placeholder="30">
-          <span class="duration-label">분</span>
+          <label for="manual-hours" class="sr-only">시간</label>
+          <input type="number" id="manual-hours" min="0" max="23" value="0" aria-label="시간">
+          <span class="duration-label" aria-hidden="true">시간</span>
+          <label for="manual-minutes" class="sr-only">분</label>
+          <input type="number" id="manual-minutes" min="0" max="59" value="30" aria-label="분">
+          <span class="duration-label" aria-hidden="true">분</span>
         </div>
         <button type="submit" class="btn">추가</button>
       </form>
     </div>
-    <div class="activity-table" id="activity-table">
+    <div class="activity-table" id="activity-table" role="list" aria-label="앱별 사용 내역">
       <div class="flex-between" style="padding: 20px 24px 12px">
         <h3 style="padding:0">상세 내역</h3>
-        <span style="font-size:12px; color:var(--text-secondary)">항목을 클릭하면 상세 내역 표시</span>
+        <span style="font-size:12px; color:var(--text-secondary)">항목을 클릭하거나 Enter를 눌러 상세 내역 표시</span>
       </div>
     </div>
   `;
@@ -209,16 +213,20 @@ async function renderDashboard(container, date) {
 
     const row = document.createElement('div');
     row.className = 'table-row table-row-expandable';
+    row.setAttribute('role', 'listitem');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-expanded', 'false');
+    row.setAttribute('aria-label', `${appItem.name}, ${formatTime(appItem.totalSec)}, ${appItem.percentage}%`);
     row.innerHTML = `
       <div>
-        <span class="expand-arrow">▶</span>
+        <span class="expand-arrow" aria-hidden="true">▶</span>
         <span class="app-name">${esc(appItem.name)}</span>
-        <div class="progress-bar"><div class="fill" style="width: ${appItem.percentage}%"></div></div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="${appItem.percentage}" aria-valuemin="0" aria-valuemax="100" aria-label="${appItem.name} ${appItem.percentage}%"><div class="fill" style="width: ${appItem.percentage}%"></div></div>
       </div>
       <div class="time">${formatTime(appItem.totalSec)}</div>
       <div class="pct-cell">
         <span class="pct">${appItem.percentage}%</span>
-        <button class="delete-btn" title="삭제">&times;</button>
+        <button class="delete-btn" aria-label="${appItem.name} 삭제">&times;</button>
       </div>
     `;
 
@@ -238,12 +246,15 @@ async function renderDashboard(container, date) {
       }
     });
 
-    // Accordion toggle
-    row.addEventListener('click', async (e) => {
+    // Accordion toggle (click + keyboard)
+    async function toggleAccordion(e) {
       if (e.target.closest('.delete-btn')) return;
+      if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.type === 'keydown') e.preventDefault();
 
       expanded = !expanded;
       row.classList.toggle('expanded', expanded);
+      row.setAttribute('aria-expanded', expanded);
       row.querySelector('.expand-arrow').textContent = expanded ? '▼' : '▶';
 
       if (expanded) {
@@ -374,7 +385,9 @@ async function renderDashboard(container, date) {
       } else {
         detailsContainer.style.display = 'none';
       }
-    });
+    }
+    row.addEventListener('click', toggleAccordion);
+    row.addEventListener('keydown', toggleAccordion);
 
     rowWrapper.appendChild(row);
     rowWrapper.appendChild(detailsContainer);

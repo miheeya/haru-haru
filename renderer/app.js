@@ -12,20 +12,25 @@ function toLocalDateStr(d) {
 let currentView = 'briefing';
 let currentDate = toLocalDateStr(new Date());
 
-// Navigation
+// Navigation — click + keyboard (Enter/Space)
 document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const view = item.dataset.view;
-    switchView(view);
+  item.addEventListener('click', () => switchView(item.dataset.view));
+  item.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      switchView(item.dataset.view);
+    }
   });
 });
 
 function switchView(view) {
   currentView = view;
 
-  // Update nav
+  // Update nav + aria-selected
   document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.view === view);
+    const isActive = el.dataset.view === view;
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-selected', isActive);
   });
 
   // Render view
@@ -64,7 +69,7 @@ function prevDate(dateStr) {
 
 function nextDate(dateStr) {
   const today = toLocalDateStr(new Date());
-  if (dateStr >= today) return dateStr; // 오늘 이후로는 이동 불가
+  if (dateStr >= today) return dateStr;
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
   return toLocalDateStr(d);
@@ -84,9 +89,11 @@ async function updateTrackingStatus() {
   const { isTracking } = await window.api.getTrackingStatus();
   const el = document.getElementById('tracking-status');
   const dot = el.querySelector('.status-dot');
-  const text = el.querySelector('span');
+  const textEl = el.querySelectorAll('span')[1];
   dot.classList.toggle('active', isTracking);
-  text.textContent = isTracking ? '추적 중' : '일시정지';
+  const label = isTracking ? '추적 중' : '일시정지';
+  textEl.textContent = label;
+  el.setAttribute('aria-label', `추적 상태: ${label}. 클릭하여 토글`);
 }
 
 document.getElementById('tracking-status').addEventListener('click', async () => {
@@ -119,24 +126,23 @@ document.getElementById('content').addEventListener('click', (e) => {
 updateTrackingStatus();
 switchView('briefing');
 
-// Auto-refresh: only update stats text, not full re-render (preserves scroll, accordion, focus)
+// Auto-refresh: only update stats text, not full re-render
 let lastSummaryJson = '';
 
 async function softRefreshDashboard() {
   const today = toLocalDateStr(new Date());
-  if (currentDate !== today) return; // only auto-refresh today's view
+  if (currentDate !== today) return;
 
   try {
     const data = await window.api.getDaySummary(currentDate);
     const newJson = JSON.stringify(data);
-    if (newJson === lastSummaryJson) return; // no change
+    if (newJson === lastSummaryJson) return;
     lastSummaryJson = newJson;
 
-    // Update stat cards if they exist
     const totalTimeEl = document.getElementById('total-time');
     const appCountEl = document.getElementById('app-count');
     const topAppEl = document.getElementById('top-app');
-    if (!totalTimeEl) return; // not on dashboard
+    if (!totalTimeEl) return;
 
     if (data.apps && data.apps.length > 0) {
       const totalHours = Math.floor(data.totalSec / 3600);
