@@ -112,6 +112,33 @@ describe('parseTitle', () => {
     });
   });
 
+  describe('메신저', () => {
+    it('KakaoWork 채팅 타이틀에서 날짜/시간 제거', () => {
+      expect(parseTitle('KakaoWork', 'max.0420 (이호경) - 4월 3일 (금) 오전 11:15'))
+        .toBe('max.0420 (이호경)');
+    });
+
+    it('KakaoWork 채팅 오후 시간도 정상 처리', () => {
+      expect(parseTitle('KakaoWork', 'jake.219 (이승국) - 4월 3일 (금) 오후 2:30'))
+        .toBe('jake.219 (이승국)');
+    });
+
+    it('KakaoWork 메인 창 타이틀은 그대로', () => {
+      expect(parseTitle('KakaoWork', '카카오워크'))
+        .toBe('카카오워크');
+    });
+
+    it('KakaoWork 조직도 등 비 대화창은 그대로', () => {
+      expect(parseTitle('KakaoWork', '카카오 공동체 조직도'))
+        .toBe('카카오 공동체 조직도');
+    });
+
+    it('KakaoTalk 대화방 이름은 그대로', () => {
+      expect(parseTitle('KakaoTalk', '스페인식당'))
+        .toBe('스페인식당');
+    });
+  });
+
   describe('기타 앱', () => {
     it('알 수 없는 앱은 마지막 " - " 뒤를 제거', () => {
       expect(parseTitle('notepad', '메모장.txt - 메모장'))

@@ -519,6 +519,19 @@ body {
   color: #f55;
 }
 
+.detail-row-expand {
+  cursor: pointer;
+}
+
+.detail-row-expand:hover {
+  background: rgba(66, 133, 244, 0.06);
+}
+
+.expand-more {
+  color: var(--accent);
+  font-weight: 500;
+}
+
 .detail-loading {
   padding: 12px 48px;
   text-align: center;
@@ -533,6 +546,153 @@ body {
   font-size: 16px;
   color: var(--text-secondary);
   margin-bottom: 12px;
+}
+
+/* Idle gaps */
+.idle-gaps-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.idle-gaps-card h3 {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.idle-gap-total {
+  font-size: 13px;
+  color: var(--yellow);
+  font-weight: 500;
+}
+
+.idle-gap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.idle-gap-row:last-child {
+  border-bottom: none;
+}
+
+.idle-gap-time {
+  color: var(--text-secondary);
+}
+
+.idle-gap-duration {
+  color: var(--yellow);
+  font-weight: 500;
+}
+
+/* Todo list */
+.todo-list {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+.todo-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.todo-item.done {
+  opacity: 0.5;
+}
+
+.todo-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-checkbox-placeholder {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.todo-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  padding: 2px 0;
+}
+
+.todo-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.todo-done-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.todo-add {
+  opacity: 0.7;
+}
+
+.todo-add:hover {
+  opacity: 1;
+}
+
+.todo-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 0 4px;
+}
+
+.todo-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.todo-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.todo-progress-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .ai-summary-box {

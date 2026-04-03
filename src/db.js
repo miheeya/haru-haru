@@ -95,6 +95,9 @@ async function initDB() {
     )
   `);
 
+  // Add todos_json column for existing DBs
+  try { db.run('ALTER TABLE daily_summary ADD COLUMN todos_json TEXT'); } catch {}
+
   // Seed default category rules
   const defaultRules = [
     ['Code', null, '개발'], ['code', null, '개발'],
@@ -203,7 +206,7 @@ function getJournal(date) {
     || { ai_summary: null, user_notes: '' };
 }
 
-const ALLOWED_SUMMARY_COLUMNS = ['user_notes'];
+const ALLOWED_SUMMARY_COLUMNS = ['user_notes', 'todos_json'];
 
 function upsertDailySummaryColumn(date, column, value) {
   if (!ALLOWED_SUMMARY_COLUMNS.includes(column)) {
@@ -221,6 +224,18 @@ function upsertDailySummaryColumn(date, column, value) {
 
 function saveJournalNote(date, note) {
   upsertDailySummaryColumn(date, 'user_notes', note);
+}
+
+function getTodos(date) {
+  const row = queryOne('SELECT todos_json FROM daily_summary WHERE date = ?', [date]);
+  if (row && row.todos_json) {
+    try { return JSON.parse(row.todos_json); } catch { return []; }
+  }
+  return [];
+}
+
+function saveTodos(date, todos) {
+  upsertDailySummaryColumn(date, 'todos_json', JSON.stringify(todos));
 }
 
 function getSettings() {
@@ -505,13 +520,44 @@ function getMonthlyStats(yearMonth) {
   }));
 }
 
+// --- Idle gaps: find periods with no activity (10min+) ---
+
+function getIdleGaps(date, minGapMin = 10) {
+  const rows = queryAll(`
+    SELECT timestamp, duration_sec
+    FROM activity_log
+    WHERE date(timestamp, 'localtime') = ?
+    ORDER BY timestamp ASC
+  `, [date]);
+
+  if (rows.length < 2) return [];
+
+  const gaps = [];
+  for (let i = 1; i < rows.length; i++) {
+    const prevEnd = new Date(rows[i - 1].timestamp).getTime() + rows[i - 1].duration_sec * 1000;
+    const currStart = new Date(rows[i].timestamp).getTime();
+    const gapSec = Math.round((currStart - prevEnd) / 1000);
+
+    if (gapSec >= minGapMin * 60) {
+      gaps.push({
+        startTime: new Date(prevEnd).toISOString(),
+        endTime: rows[i].timestamp,
+        durationSec: gapSec
+      });
+    }
+  }
+
+  return gaps;
+}
+
 module.exports = {
   initDB, saveDB,
   insertActivity, insertManualActivity, updateManualActivity, deleteActivity,
   getDaySummary, getDayActivities, getAppDetails,
-  getJournal, saveJournalNote,
+  getJournal, saveJournalNote, getTodos, saveTodos,
   getSettings, saveSettings,
   // v2
   classifyActivity, getCategoryMap, updateCategory, addCategoryRule,
-  calculateFocusScore, getDailyStats, getWeeklyStats, getMonthlyStats
+  calculateFocusScore, getDailyStats, getWeeklyStats, getMonthlyStats,
+  getIdleGaps
 };

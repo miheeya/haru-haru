@@ -61,6 +61,15 @@ function parseTitle(processName, windowTitle) {
     }
   }
 
+  // Messengers: clean up timestamp suffixes from chat titles
+  // KakaoWork: "max.0420 (이호경) - 4월 3일 (금) 오전 11:15" → "max.0420 (이호경)"
+  // KakaoTalk: titles are already clean (just contact/room name)
+  if (lowerProcess === 'kakaowork' || lowerProcess === 'kakaotalk') {
+    // Remove trailing " - 날짜 시간" pattern
+    const datePattern = / - \d{1,2}월 \d{1,2}일 \(.\) (오전|오후) \d{1,2}:\d{2}$/;
+    return windowTitle.replace(datePattern, '').trim();
+  }
+
   // Terminals: keep as-is (contains path/command info)
   if (TERMINAL_NAMES.has(processName) || TERMINAL_NAMES.has(lowerProcess)) {
     return windowTitle;
@@ -108,7 +117,7 @@ function categorizeByTitle(processName, windowTitle) {
   }
 
   // Communication apps
-  if (['slack', 'discord', 'teams', 'zoom', 'kakaotalk'].includes(lowerProcess)) {
+  if (['slack', 'discord', 'teams', 'zoom', 'kakaotalk', 'kakaowork'].includes(lowerProcess)) {
     return '커뮤니케이션';
   }
 

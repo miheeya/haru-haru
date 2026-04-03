@@ -21,7 +21,7 @@ beforeEach(async () => {
   )`);
   db.run(`CREATE TABLE daily_summary (
     date TEXT PRIMARY KEY,
-    ai_summary TEXT, user_notes TEXT,
+    ai_summary TEXT, user_notes TEXT, todos_json TEXT,
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL
   )`);
   db.run(`CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
@@ -231,6 +231,79 @@ describe('journal', () => {
     const result = getJournal('2026-03-29');
     expect(result.user_notes).toBe('내 메모');
     expect(result.ai_summary).toBe('AI 요약');
+  });
+});
+
+describe('todos', () => {
+  function upsert(date, col, val) {
+    const now = new Date().toISOString();
+    db.run(`INSERT INTO daily_summary (date,${col},created_at,updated_at) VALUES (?,?,?,?)
+      ON CONFLICT(date) DO UPDATE SET ${col}=?,updated_at=?`, [date, val, now, now, val, now]);
+  }
+
+  function getTodos(date) {
+    const row = queryOne('SELECT todos_json FROM daily_summary WHERE date=?', [date]);
+    if (row && row.todos_json) { try { return JSON.parse(row.todos_json); } catch { return []; } }
+    return [];
+  }
+
+  it('할 일이 없으면 빈 배열 반환', () => {
+    expect(getTodos('2026-04-03')).toEqual([]);
+  });
+
+  it('할 일 저장 후 조회', () => {
+    const todos = [
+      { id: 1, text: 'PR 리뷰하기', done: false },
+      { id: 2, text: '디자인 미팅 준비', done: true }
+    ];
+    upsert('2026-04-03', 'todos_json', JSON.stringify(todos));
+    const result = getTodos('2026-04-03');
+    expect(result).toHaveLength(2);
+    expect(result[0].text).toBe('PR 리뷰하기');
+    expect(result[1].done).toBe(true);
+  });
+
+  it('할 일 업데이트 (체크 토글)', () => {
+    const todos = [{ id: 1, text: '테스트', done: false }];
+    upsert('2026-04-03', 'todos_json', JSON.stringify(todos));
+
+    todos[0].done = true;
+    upsert('2026-04-03', 'todos_json', JSON.stringify(todos));
+
+    const result = getTodos('2026-04-03');
+    expect(result[0].done).toBe(true);
+  });
+
+  it('할 일과 회고 메모가 서로 독립적', () => {
+    upsert('2026-04-03', 'todos_json', JSON.stringify([{ id: 1, text: '할일', done: false }]));
+    upsert('2026-04-03', 'user_notes', '회고 메모');
+
+    const todos = getTodos('2026-04-03');
+    expect(todos).toHaveLength(1);
+
+    const journal = queryOne('SELECT user_notes FROM daily_summary WHERE date=?', ['2026-04-03']);
+    expect(journal.user_notes).toBe('회고 메모');
+  });
+
+  it('앱 재시작 시뮬레이션 — 할 일 유지', () => {
+    const todos = [
+      { id: 1, text: '작업A', done: true },
+      { id: 2, text: '작업B', done: false }
+    ];
+    upsert('2026-04-03', 'todos_json', JSON.stringify(todos));
+
+    // Serialize → Reload (simulate restart)
+    const db2 = new SQL.Database(Buffer.from(db.export()));
+    const stmt = db2.prepare('SELECT todos_json FROM daily_summary WHERE date=?');
+    stmt.bind(['2026-04-03']);
+    stmt.step();
+    const restored = JSON.parse(stmt.getAsObject().todos_json);
+    stmt.free();
+    db2.close();
+
+    expect(restored).toHaveLength(2);
+    expect(restored[0].done).toBe(true);
+    expect(restored[1].text).toBe('작업B');
   });
 });
 

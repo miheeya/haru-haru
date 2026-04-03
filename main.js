@@ -47,6 +47,14 @@ function registerIPC() {
     db.saveJournalNote(date, note);
   });
 
+  ipcMain.handle('get-todos', (_event, date) => {
+    return db.getTodos(date);
+  });
+
+  ipcMain.handle('save-todos', (_event, date, todos) => {
+    db.saveTodos(date, todos);
+  });
+
   ipcMain.handle('get-settings', () => {
     return db.getSettings();
   });
@@ -86,6 +94,10 @@ function registerIPC() {
   });
 
   // --- v2: Briefing, Stats, Categories ---
+
+  ipcMain.handle('get-idle-gaps', (_event, date) => {
+    return db.getIdleGaps(date);
+  });
 
   ipcMain.handle('get-daily-stats', (_event, date) => {
     return db.getDailyStats(date);

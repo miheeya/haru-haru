@@ -5,10 +5,6 @@ async function renderDashboard(container, date) {
   const isToday = date >= today;
 
   container.innerHTML = `
-    <div style="background:#330;padding:8px 12px;border-radius:8px;margin-bottom:12px;font-size:12px;font-family:monospace;color:#ff0">
-      DEBUG BUILD ${new Date().toISOString().slice(0,19)} | date=${date} | today=${today}
-      <div id="debug-log" style="margin-top:4px;color:#0ff">아무 곳이나 클릭하면 여기에 표시됩니다</div>
-    </div>
     <div class="dashboard-header">
       <h2>대시보드</h2>
       <div class="date-nav">
@@ -37,6 +33,7 @@ async function renderDashboard(container, date) {
         <canvas id="usage-chart"></canvas>
       </div>
     </div>
+    <div id="idle-gaps-section"></div>
     <div class="manual-entry-card">
       <div class="flex-between mb-12">
         <h3>직접 입력</h3>
@@ -114,7 +111,13 @@ async function renderDashboard(container, date) {
   });
 
   // Fetch data
-  const data = await window.api.getDaySummary(date);
+  const [data, idleGaps] = await Promise.all([
+    window.api.getDaySummary(date),
+    window.api.getIdleGaps(date)
+  ]);
+
+  // Render idle gaps
+  renderIdleGaps(idleGaps);
 
   if (!data.apps || data.apps.length === 0) {
     document.getElementById('total-time').textContent = '0m';
@@ -253,12 +256,16 @@ async function renderDashboard(container, date) {
         detailsContainer.innerHTML = '';
         const result = cachedDetails;
 
-        const maxShow = 10;
-        const shown = result.details.slice(0, maxShow);
-        const rest = result.details.slice(maxShow);
+        let maxShow = 10;
+        let showAll = false;
 
-        shown.forEach((d, i) => {
-          const isLast = i === shown.length - 1 && rest.length === 0;
+        function renderDetails() {
+          detailsContainer.innerHTML = '';
+          const shown = showAll ? result.details : result.details.slice(0, maxShow);
+          const rest = showAll ? [] : result.details.slice(maxShow);
+
+          shown.forEach((d, i) => {
+            const isLast = i === shown.length - 1 && rest.length === 0;
           const detailRow = document.createElement('div');
           detailRow.className = 'detail-row';
 
@@ -326,19 +333,44 @@ async function renderDashboard(container, date) {
           detailsContainer.appendChild(detailRow);
         });
 
-        if (rest.length > 0) {
-          const restSec = rest.reduce((sum, d) => sum + d.totalSec, 0);
-          const restRow = document.createElement('div');
-          restRow.className = 'detail-row';
-          restRow.innerHTML = `
-            <div class="detail-label">
-              <span class="tree-branch">└</span>
-              <span class="detail-text">기타 ${rest.length}건</span>
-            </div>
-            <div class="detail-time">${formatTime(restSec)}</div>
-          `;
-          detailsContainer.appendChild(restRow);
+          if (rest.length > 0) {
+            const restSec = rest.reduce((sum, d) => sum + d.totalSec, 0);
+            const restRow = document.createElement('div');
+            restRow.className = 'detail-row detail-row-expand';
+            restRow.innerHTML = `
+              <div class="detail-label">
+                <span class="tree-branch">└</span>
+                <span class="detail-text expand-more">▶ 나머지 ${rest.length}건 더 보기</span>
+              </div>
+              <div class="detail-time">${formatTime(restSec)}</div>
+            `;
+            restRow.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              showAll = true;
+              renderDetails();
+            });
+            detailsContainer.appendChild(restRow);
+          } else if (showAll && result.details.length > maxShow) {
+            // "접기" 버튼
+            const collapseRow = document.createElement('div');
+            collapseRow.className = 'detail-row detail-row-expand';
+            collapseRow.innerHTML = `
+              <div class="detail-label">
+                <span class="tree-branch">└</span>
+                <span class="detail-text expand-more">▲ 접기</span>
+              </div>
+              <div class="detail-time"></div>
+            `;
+            collapseRow.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              showAll = false;
+              renderDetails();
+            });
+            detailsContainer.appendChild(collapseRow);
+          }
         }
+
+        renderDetails();
       } else {
         detailsContainer.style.display = 'none';
       }
@@ -348,4 +380,37 @@ async function renderDashboard(container, date) {
     rowWrapper.appendChild(detailsContainer);
     tableEl.appendChild(rowWrapper);
   }
+}
+
+function renderIdleGaps(gaps) {
+  const section = document.getElementById('idle-gaps-section');
+  if (!gaps || gaps.length === 0) {
+    section.innerHTML = '';
+    return;
+  }
+
+  const totalIdleSec = gaps.reduce((s, g) => s + g.durationSec, 0);
+
+  const rows = gaps.map(g => {
+    const start = new Date(g.startTime);
+    const end = new Date(g.endTime);
+    const startStr = start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    const endStr = end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="idle-gap-row">
+        <span class="idle-gap-time">${startStr} ~ ${endStr}</span>
+        <span class="idle-gap-duration">${formatTime(g.durationSec)}</span>
+      </div>
+    `;
+  }).join('');
+
+  section.innerHTML = `
+    <div class="idle-gaps-card">
+      <div class="flex-between mb-12">
+        <h3>자리비움 (10분 이상)</h3>
+        <span class="idle-gap-total">총 ${formatTime(totalIdleSec)}</span>
+      </div>
+      ${rows}
+    </div>
+  `;
 }

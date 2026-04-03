@@ -1,6 +1,22 @@
 const { getActiveWindow } = require('./windows/get-active-window');
 const { insertActivity, getSettings } = require('./db');
 
+// Window titles to ignore (noise: emoticon pickers, system windows, toast popups)
+const TITLE_FILTERS = [
+  /^이모티콘\(/,           // KakaoWork/KakaoTalk emoticon picker
+  /^ToastWindow$/,         // KakaoWork toast notification
+  /^Default IME$/,         // IME system window
+  /^MSCTFIME UI$/,         // IME system window
+  /^GDI\+ Window/,         // GDI system window
+  /^CiceroUIWndFrame$/,    // IME frame
+  /^SystemResource/,       // System resource notification
+  /^Hidden Window$/,       // Hidden system window
+];
+
+function shouldFilterTitle(title) {
+  return TITLE_FILTERS.some(re => re.test(title));
+}
+
 let intervalId = null;
 let tracking = false;
 let lastProcess = null;
@@ -40,6 +56,9 @@ function startTracking() {
     try {
       const win = await getActiveWindow();
       if (!win || !win.processName || !win.windowTitle) return;
+
+      // Filter out noise windows (emoticon pickers, toast notifications, etc.)
+      if (shouldFilterTitle(win.windowTitle)) return;
 
       // --- Idle detection (dual signal) ---
       const systemIdle = getSystemIdleSeconds();

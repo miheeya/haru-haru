@@ -96,13 +96,6 @@ document.getElementById('tracking-status').addEventListener('click', async () =>
 
 // Date navigation — single event delegation handler for ALL views
 document.getElementById('content').addEventListener('click', (e) => {
-  // DEBUG: 화면에 클릭 정보 표시
-  const dbg = document.getElementById('debug-log');
-  const tag = e.target.tagName;
-  const nav = e.target.dataset?.nav || e.target.closest('[data-nav]')?.dataset?.nav || 'none';
-  const disabled = e.target.closest('[data-nav]')?.disabled;
-  if (dbg) dbg.textContent = `CLICK: <${tag}> nav=${nav} disabled=${disabled} | ${new Date().toLocaleTimeString()}`;
-
   const btn = e.target.closest('[data-nav]');
   if (!btn || btn.disabled) return;
 
