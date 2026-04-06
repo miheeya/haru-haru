@@ -2,7 +2,7 @@ let dashboardChart = null;
 
 async function renderDashboard(container, date) {
   const today = toLocalDateStr(new Date());
-  const isToday = date >= today;
+  const isToday = date === today;
 
   container.innerHTML = `
     <div class="dashboard-header">

@@ -3,7 +3,7 @@ let nextTodoId = 1;
 
 async function renderJournal(container, date) {
   const today = toLocalDateStr(new Date());
-  const isToday = date >= today;
+  const isToday = date === today;
 
   container.innerHTML = `
     <div class="dashboard-header">
@@ -11,7 +11,7 @@ async function renderJournal(container, date) {
       <div class="date-nav">
         <button data-nav="prev" data-view="journal">&lt;</button>
         <span class="current-date">${formatDate(date)}</span>
-        <button data-nav="next" data-view="journal" ${isToday ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&gt;</button>
+        <button data-nav="next" data-view="journal" ${isToday ? 'disabled' : ''}>&gt;</button>
       </div>
     </div>
 
