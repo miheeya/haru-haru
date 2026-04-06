@@ -1,6 +1,6 @@
 {
   "name": "haru-haru",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Daily activity tracker with focus score and productivity insights",
   "main": "main.js",
   "author": "haru-haru",

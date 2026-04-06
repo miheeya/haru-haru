@@ -2,12 +2,12 @@
 
 ## 다운로드
 
-1. 아래 링크에서 **haru-haru-v0.2.0-mac.zip** 파일을 다운로드합니다.
+1. 아래 링크에서 **haru-haru-v0.2.1-mac.zip** 파일을 다운로드합니다.
    - https://github.com/miheeya/haru-haru/releases/latest
 
 ## 설치 방법
 
-1. 다운로드한 `haru-haru-v0.2.0-mac.zip` 파일을 더블클릭하여 압축을 풉니다.
+1. 다운로드한 `haru-haru-v0.2.1-mac.zip` 파일을 더블클릭하여 압축을 풉니다.
 2. 압축 해제된 폴더 안에서 `하루하루.app` 파일을 **응용 프로그램(Applications)** 폴더로 드래그합니다.
 
 ## 처음 실행 시 (보안 경고 해제)
