@@ -49,19 +49,35 @@ jobs:
         run: |
           npx asar list "$APP_PATH/Contents/Resources/app.asar" > /tmp/asar-contents.txt
           echo "--- Checking asar contents ---"
-          grep "main.js" /tmp/asar-contents.txt || { echo "FAIL: main.js missing from asar"; exit 1; }
-          echo "PASS: main.js found"
-          grep "preload.js" /tmp/asar-contents.txt || { echo "FAIL: preload.js missing from asar"; exit 1; }
-          echo "PASS: preload.js found"
-          grep "src/db.js" /tmp/asar-contents.txt || { echo "FAIL: src/db.js missing from asar"; exit 1; }
-          echo "PASS: src/db.js found"
-          grep "src/macos/get-active-window.js" /tmp/asar-contents.txt || { echo "FAIL: macOS module missing from asar"; exit 1; }
-          echo "PASS: macOS module found"
-          grep "renderer/index.html" /tmp/asar-contents.txt || { echo "FAIL: renderer missing from asar"; exit 1; }
-          echo "PASS: renderer found"
+          for f in main.js preload.js src/db.js src/macos/get-active-window.js renderer/index.html; do
+            grep "$f" /tmp/asar-contents.txt || { echo "FAIL: $f missing from asar"; exit 1; }
+            echo "PASS: $f found"
+          done
           grep "node_modules/sql.js" /tmp/asar-contents.txt || { echo "FAIL: sql.js missing from asar"; exit 1; }
-          echo "PASS: sql.js bundled"
           echo "PASS: All required files present in app bundle"
+
+      - name: Smoke test — main process starts without crash
+        run: |
+          # Use Electron binary from the built app to validate runtime loading
+          # Write a minimal test script that initializes DB (the main failure point on macOS)
+          cat > /tmp/smoke-test.js << 'SMOKE'
+          const { app } = require('electron');
+          app.disableHardwareAcceleration();
+          app.whenReady().then(async () => {
+            try {
+              const db = require('./src/db');
+              await db.initDB();
+              console.log('PASS: DB initialized successfully');
+              process.exit(0);
+            } catch (e) {
+              console.error('FAIL:', e.message);
+              process.exit(1);
+            }
+          });
+          setTimeout(() => { console.error('FAIL: Timeout after 15s'); process.exit(1); }, 15000);
+          SMOKE
+          # Run with npx electron (uses the project's electron, not the packaged app)
+          npx electron --no-sandbox --disable-gpu /tmp/smoke-test.js
 
   smoke-test-win:
     runs-on: windows-latest
