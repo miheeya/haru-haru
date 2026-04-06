@@ -1,0 +1,60 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx electron-builder --win --dir
+      - name: Zip Windows build
+        run: Compress-Archive -Path release\win-unpacked -DestinationPath release\haru-haru-${{ github.ref_name }}-win.zip
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-build
+          path: release/haru-haru-${{ github.ref_name }}-win.zip
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx electron-builder --mac --dir
+      - name: Zip macOS build
+        run: |
+          cd release
+          MAC_DIR=$(ls -d mac* | head -1)
+          zip -r haru-haru-${{ github.ref_name }}-mac.zip "$MAC_DIR" --symlinks
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: release/haru-haru-${{ github.ref_name }}-mac.zip
+
+  release:
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
+          generate_release_notes: true

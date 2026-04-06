@@ -170,6 +170,17 @@ body {
   background: var(--border);
 }
 
+.date-nav .btn-today {
+  font-size: 12px;
+  padding: 4px 10px;
+  margin-left: 4px;
+}
+
+.date-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .date-nav .current-date {
   font-size: 15px;
   font-weight: 500;

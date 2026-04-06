@@ -1,6 +1,6 @@
 {
   "name": "haru-haru",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Daily activity tracker with focus score and productivity insights",
   "main": "main.js",
   "author": "haru-haru",
@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "electron-builder --win --dir",
-    "build:installer": "electron-builder --win"
+    "build:installer": "electron-builder --win",
+    "build:mac": "electron-builder --mac --dir"
   },
   "dependencies": {
     "sql.js": "^1.11.0"
@@ -30,6 +31,11 @@
       "target": "dir",
       "icon": "assets/icon.png",
       "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dir",
+      "icon": "assets/icon.png",
+      "identity": null
     },
     "files": [
       "main.js",

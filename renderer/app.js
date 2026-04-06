@@ -120,6 +120,9 @@ document.getElementById('content').addEventListener('click', (e) => {
   } else if (navAction === 'next' && view) {
     currentDate = nextDate(currentDate);
     switchView(view);
+  } else if (navAction === 'today' && view) {
+    currentDate = toLocalDateStr(new Date());
+    switchView(view);
   } else if (navAction === 'trend-prev' && window._trendState) {
     window._trendState.prev();
   } else if (navAction === 'trend-next' && window._trendState) {

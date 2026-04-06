@@ -11,6 +11,7 @@ async function renderDashboard(container, date) {
         <button data-nav="prev" data-view="dashboard" aria-label="이전 날짜">&lt;</button>
         <span class="current-date" aria-live="polite">${formatDate(date)}</span>
         <button data-nav="next" data-view="dashboard" aria-label="다음 날짜" ${isToday ? 'disabled' : ''}>&gt;</button>
+        <button data-nav="today" data-view="dashboard" aria-label="오늘 날짜로 이동" ${isToday ? 'disabled' : ''} class="btn-today">오늘</button>
       </div>
     </div>
     <div class="stats-row" id="stats-row">
