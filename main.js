@@ -25,7 +25,8 @@ function createWindow() {
 
   // Zoom: Ctrl+= zoom in, Ctrl+0 reset (Ctrl+- already works via Electron default)
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.control && !input.alt && input.type === 'keyDown') {
+    const mod = process.platform === 'darwin' ? input.meta : input.control;
+    if (mod && !input.alt && input.type === 'keyDown') {
       // Use input.code (physical key) to avoid keyboard layout issues
       if (input.code === 'Equal' || input.code === 'NumpadAdd') {
         mainWindow.webContents.setZoomLevel(mainWindow.webContents.getZoomLevel() + 0.5);

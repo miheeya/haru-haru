@@ -14,7 +14,11 @@ function toLocalDateStr(d) {
 }
 
 async function initDB() {
-  const SQL = await initSqlJs();
+  // Locate sql-wasm.wasm: extraResources in packaged app, or node_modules in dev
+  const wasmPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'sql-wasm.wasm')
+    : path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+  const SQL = await initSqlJs({ locateFile: () => wasmPath });
   const userDataPath = app.getPath('userData');
   dbPath = path.join(userDataPath, 'haru.db');
 
