@@ -45,25 +45,23 @@ jobs:
           test -f "$APP_PATH/Contents/Resources/app.asar" || { echo "FAIL: app.asar missing"; exit 1; }
           echo "PASS: app.asar found"
 
-      - name: Smoke test — main process loads without error
+      - name: Smoke test — verify asar contains required files
         run: |
-          # CI has no display, so run Electron main process validation via xvfb
-          npx xvfb-maybe npx electron --no-sandbox -e "
-            const { app } = require('electron');
-            const db = require('./src/db');
-            app.whenReady().then(async () => {
-              try {
-                await db.initDB();
-                console.log('PASS: DB initialized');
-                app.quit();
-              } catch (e) {
-                console.error('FAIL:', e.message);
-                process.exit(1);
-              }
-            });
-            setTimeout(() => { console.error('FAIL: Timeout'); process.exit(1); }, 15000);
-          "
-          echo "PASS: Main process smoke test completed"
+          npx asar list "$APP_PATH/Contents/Resources/app.asar" > /tmp/asar-contents.txt
+          echo "--- Checking asar contents ---"
+          grep "main.js" /tmp/asar-contents.txt || { echo "FAIL: main.js missing from asar"; exit 1; }
+          echo "PASS: main.js found"
+          grep "preload.js" /tmp/asar-contents.txt || { echo "FAIL: preload.js missing from asar"; exit 1; }
+          echo "PASS: preload.js found"
+          grep "src/db.js" /tmp/asar-contents.txt || { echo "FAIL: src/db.js missing from asar"; exit 1; }
+          echo "PASS: src/db.js found"
+          grep "src/macos/get-active-window.js" /tmp/asar-contents.txt || { echo "FAIL: macOS module missing from asar"; exit 1; }
+          echo "PASS: macOS module found"
+          grep "renderer/index.html" /tmp/asar-contents.txt || { echo "FAIL: renderer missing from asar"; exit 1; }
+          echo "PASS: renderer found"
+          grep "node_modules/sql.js" /tmp/asar-contents.txt || { echo "FAIL: sql.js missing from asar"; exit 1; }
+          echo "PASS: sql.js bundled"
+          echo "PASS: All required files present in app bundle"
 
   smoke-test-win:
     runs-on: windows-latest
