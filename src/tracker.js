@@ -1,4 +1,6 @@
-const { getActiveWindow } = require('./windows/get-active-window');
+const { getActiveWindow } = process.platform === 'darwin'
+  ? require('./macos/get-active-window')
+  : require('./windows/get-active-window');
 const { insertActivity, getSettings } = require('./db');
 
 // Window titles to ignore (noise: emoticon pickers, system windows, toast popups)
