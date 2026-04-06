@@ -76,8 +76,10 @@ jobs:
           });
           setTimeout(() => { console.error('FAIL: Timeout after 15s'); process.exit(1); }, 15000);
           SMOKE
-          # Run with npx electron (uses the project's electron, not the packaged app)
-          npx electron --no-sandbox --disable-gpu /tmp/smoke-test.js
+          # Copy script to project root so require('./src/db') resolves correctly
+          cp /tmp/smoke-test.js ./smoke-test.js
+          npx electron --no-sandbox --disable-gpu ./smoke-test.js
+          rm -f ./smoke-test.js
 
   smoke-test-win:
     runs-on: windows-latest
