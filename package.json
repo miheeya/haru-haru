@@ -1,6 +1,6 @@
 {
   "name": "haru-haru",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Daily activity tracker with focus score and productivity insights",
   "main": "main.js",
   "author": "haru-haru",
@@ -16,7 +16,7 @@
     "sql.js": "^1.11.0"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
+    "electron": "^41.0.0",
     "electron-builder": "^25.1.8",
     "vitest": "^4.1.2"
   },
