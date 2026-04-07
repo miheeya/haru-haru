@@ -1,6 +1,6 @@
 {
   "name": "haru-haru",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Daily activity tracker with focus score and productivity insights",
   "main": "main.js",
   "author": "haru-haru",
@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "electron": "^41.0.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.0.0",
     "vitest": "^4.1.2"
   },
   "build": {
@@ -35,7 +35,11 @@
     "mac": {
       "target": "dir",
       "icon": "assets/icon.png",
-      "identity": null
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": null,
+      "entitlementsInherit": null
     },
     "files": [
       "main.js",
