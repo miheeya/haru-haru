@@ -127,7 +127,7 @@ async function renderSettings(container) {
       resultEl.innerHTML = `<span style="color: var(--accent)">v${esc(result.latestVersion)}이 출시되었습니다!</span> <a href="#" id="update-download-link" style="color: var(--accent); text-decoration: underline;">다운로드</a>`;
       document.getElementById('update-download-link').addEventListener('click', (e) => {
         e.preventDefault();
-        window.open(result.downloadUrl);
+        window.api.openExternal(result.downloadUrl);
       });
     } else {
       resultEl.innerHTML = '<span style="color: var(--green)">최신 버전을 사용 중입니다.</span>';

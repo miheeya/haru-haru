@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const db = require('./src/db');
@@ -201,6 +201,12 @@ function registerIPC() {
     return app.getVersion();
   });
 
+  ipcMain.handle('open-external', (_event, url) => {
+    if (typeof url === 'string' && url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+  });
+
 }
 
 app.whenReady().then(async () => {
@@ -220,12 +226,11 @@ app.whenReady().then(async () => {
       const result = await updater.checkForUpdates(app.getVersion());
       db.saveSettings({ last_update_check: new Date().toISOString() });
       if (result.hasUpdate) {
-        mainWindow.webContents.once('did-finish-load', () => {
-          mainWindow.webContents.send('update-available', result);
-        });
-        // If already loaded, send immediately
-        if (!mainWindow.webContents.isLoading()) {
-          mainWindow.webContents.send('update-available', result);
+        const send = () => mainWindow.webContents.send('update-available', result);
+        if (mainWindow.webContents.isLoading()) {
+          mainWindow.webContents.once('did-finish-load', () => setTimeout(send, 500));
+        } else {
+          setTimeout(send, 500);
         }
       }
     }

@@ -39,4 +39,5 @@ contextBridge.exposeInMainWorld('api', {
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   onUpdateAvailable: (cb) => ipcRenderer.on('update-available', (_e, data) => cb(data)),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

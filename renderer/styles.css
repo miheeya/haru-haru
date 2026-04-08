@@ -890,6 +890,47 @@ body {
   cursor: not-allowed;
 }
 
+/* Update banner */
+#update-banner {
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  width: 100%;
+  position: relative;
+  z-index: 100;
+}
+
+#update-banner a {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+#update-banner button {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  opacity: 0.8;
+}
+
+#update-banner button:hover {
+  opacity: 1;
+}
+
+#update-banner + .app {
+  height: calc(100vh - 33px);
+}
+
 .empty-state {
   text-align: center;
   padding: 64px 24px;

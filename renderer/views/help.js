@@ -3,6 +3,17 @@ function renderHelp(container) {
     <h2 style="margin-bottom: 24px">하루하루 사용 가이드</h2>
 
     <div class="help-card">
+      <h3>📥 설치 및 업데이트</h3>
+      <p>하루하루를 처음 설치하거나 업데이트하는 방법입니다.</p>
+      <ul>
+        <li><strong>설치</strong> — 전달받은 "하루하루 Setup" exe 파일을 실행하면 설치 마법사가 안내합니다. 관리자 권한 없이 설치됩니다.</li>
+        <li><strong>SmartScreen 경고</strong> — 코드 서명이 없어 "알 수 없는 앱" 경고가 뜰 수 있습니다. "추가 정보" → "실행"을 클릭하면 됩니다.</li>
+        <li><strong>업데이트</strong> — 새 버전이 나오면 앱 상단에 알림 배너가 표시됩니다. 배너의 "다운로드" 링크를 클릭하여 새 설치 파일을 받은 후, 기존 앱 위에 덮어 설치하면 됩니다. 활동 기록은 유지됩니다.</li>
+        <li><strong>제거</strong> — Windows 설정 → 앱 → "하루하루"에서 제거할 수 있습니다.</li>
+      </ul>
+    </div>
+
+    <div class="help-card">
       <h3>☀️ 아침 브리핑</h3>
       <p>전날의 활동 데이터를 바탕으로 하루를 시작할 때 참고할 수 있는 요약을 보여줍니다.</p>
       <ul>
