@@ -122,7 +122,12 @@ function registerIPC() {
   });
 
   ipcMain.handle('add-manual-activity', (_event, date, processName, windowTitle, durationMin) => {
-    db.insertManualActivity(date, processName, windowTitle, durationMin);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    if (typeof processName !== 'string' || processName.length > 200) return;
+    if (typeof windowTitle !== 'string' || windowTitle.length > 500) return;
+    const min = parseInt(durationMin);
+    if (!Number.isFinite(min) || min < 1 || min > 1440) return;
+    db.insertManualActivity(date, processName, windowTitle, min);
   });
 
   ipcMain.handle('update-manual-activity', (_event, id, durationMin) => {
@@ -201,10 +206,13 @@ function registerIPC() {
     return app.getVersion();
   });
 
-  ipcMain.handle('open-external', (_event, url) => {
-    if (typeof url === 'string' && url.startsWith('https://')) {
-      shell.openExternal(url);
-    }
+  ipcMain.handle('open-external', (_event, urlStr) => {
+    try {
+      const parsed = new URL(urlStr);
+      if (parsed.protocol !== 'https:') return;
+      if (!parsed.hostname.endsWith('github.com')) return;
+      shell.openExternal(urlStr);
+    } catch {}
   });
 
 }
