@@ -1,8 +1,24 @@
 async function renderSettings(container) {
   const settings = await window.api.getSettings();
+  const autostartEnabled = await window.api.getAutoStart();
+  const appVersion = await window.api.getAppVersion();
 
   container.innerHTML = `
     <h2 style="margin-bottom: 24px">설정</h2>
+
+    <div class="settings-group">
+      <h3>시작 설정</h3>
+      <div class="setting-item">
+        <div>
+          <h4 class="setting-label">Windows 로그인 시 자동 시작</h4>
+          <div class="setting-desc">컴퓨터를 켤 때 하루하루가 자동으로 시작되어 트레이에서 실행됩니다.</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setting-autostart" ${autostartEnabled ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
 
     <div class="settings-group">
       <h3>추적 설정</h3>
@@ -36,6 +52,18 @@ async function renderSettings(container) {
         </div>
         <button class="btn" id="export-data-btn" style="white-space: nowrap;">내보내기</button>
       </div>
+    </div>
+
+    <div class="settings-group" style="margin-top: 16px;">
+      <h3>앱 정보</h3>
+      <div class="setting-item">
+        <div>
+          <h4 class="setting-label">현재 버전</h4>
+          <div class="setting-desc">v${esc(appVersion)}</div>
+        </div>
+        <button class="btn" id="check-update-btn" style="white-space: nowrap;">업데이트 확인</button>
+      </div>
+      <div id="update-result" style="display: none; padding: 8px 0; font-size: 13px;"></div>
     </div>
 
     <div class="settings-group" style="margin-top: 16px;">
@@ -76,6 +104,33 @@ async function renderSettings(container) {
     if (result.canceled) return;
     if (result.success) {
       alert(`CSV 파일 ${result.fileCount}개가 저장되었습니다.\n${result.dir}`);
+    }
+  });
+
+  document.getElementById('setting-autostart').addEventListener('change', async (e) => {
+    await window.api.setAutoStart(e.target.checked);
+  });
+
+  document.getElementById('check-update-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('check-update-btn');
+    const resultEl = document.getElementById('update-result');
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+
+    const result = await window.api.checkForUpdates();
+
+    btn.disabled = false;
+    btn.textContent = '업데이트 확인';
+
+    resultEl.style.display = 'block';
+    if (result.hasUpdate) {
+      resultEl.innerHTML = `<span style="color: var(--accent)">v${esc(result.latestVersion)}이 출시되었습니다!</span> <a href="#" id="update-download-link" style="color: var(--accent); text-decoration: underline;">다운로드</a>`;
+      document.getElementById('update-download-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.open(result.downloadUrl);
+      });
+    } else {
+      resultEl.innerHTML = '<span style="color: var(--green)">최신 버전을 사용 중입니다.</span>';
     }
   });
 

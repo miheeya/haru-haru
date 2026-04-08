@@ -130,6 +130,26 @@ document.getElementById('content').addEventListener('click', (e) => {
   }
 });
 
+// Update notification banner
+if (window.api.onUpdateAvailable) {
+  window.api.onUpdateAvailable((data) => {
+    if (document.getElementById('update-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.style.cssText = 'background: var(--accent); color: #fff; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;';
+    banner.innerHTML = `<span>새 버전 v${esc(data.latestVersion)}이 출시되었습니다. <a href="#" id="update-banner-link" style="color: #fff; text-decoration: underline; font-weight: 600;">다운로드</a></span><button id="update-banner-close" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; padding: 0 4px;">&times;</button>`;
+    const main = document.querySelector('.main-content');
+    main.insertBefore(banner, main.firstChild);
+    document.getElementById('update-banner-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open(data.downloadUrl);
+    });
+    document.getElementById('update-banner-close').addEventListener('click', () => {
+      banner.remove();
+    });
+  });
+}
+
 // Init
 updateTrackingStatus();
 switchView('briefing');

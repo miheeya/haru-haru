@@ -28,9 +28,18 @@
     "appId": "com.haruharu.app",
     "productName": "하루하루",
     "win": {
-      "target": "dir",
+      "target": "nsis",
       "icon": "assets/icon.png",
       "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "하루하루",
+      "language": 1042
     },
     "mac": {
       "target": "dir",

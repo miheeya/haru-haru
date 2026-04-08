@@ -7,6 +7,11 @@ import { createRequire } from 'module';
 
 let SQL, db, parseTitle;
 
+// Local date helper (same as src/db.js and renderer/app.js)
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 beforeEach(async () => {
   if (!SQL) SQL = await initSqlJs();
   db = new SQL.Database();
@@ -50,33 +55,38 @@ function queryOne(sql, params = []) {
   return result;
 }
 
+function toLocalISOString(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000`;
+}
+
 function insertActivity(proc, title, sec) {
   db.run('INSERT INTO activity_log (timestamp,process_name,window_title,duration_sec) VALUES (?,?,?,?)',
-    [new Date().toISOString(), proc, title, sec]);
+    [toLocalISOString(new Date()), proc, title, sec]);
 }
 
 function insertManualActivity(date, proc, title, min) {
   db.run('INSERT INTO activity_log (timestamp,process_name,window_title,duration_sec,is_manual) VALUES (?,?,?,?,1)',
-    [`${date}T12:00:00.000Z`, proc, title, min * 60]);
+    [`${date}T12:00:00.000`, proc, title, min * 60]);
 }
 
 function getDaySummary(date) {
   const rows = queryAll(`SELECT process_name AS name, SUM(duration_sec) AS totalSec
-    FROM activity_log WHERE date(timestamp,'localtime')=? GROUP BY process_name ORDER BY totalSec DESC`, [date]);
+    FROM activity_log WHERE date(timestamp)=? GROUP BY process_name ORDER BY totalSec DESC`, [date]);
   const totalSec = rows.reduce((s, r) => s + r.totalSec, 0);
   return { apps: rows.map(r => ({ ...r, percentage: totalSec > 0 ? Math.round(r.totalSec / totalSec * 100) : 0 })), totalSec };
 }
 
 function getDayActivities(date) {
   return queryAll(`SELECT process_name, window_title, SUM(duration_sec) AS totalSec
-    FROM activity_log WHERE date(timestamp,'localtime')=? GROUP BY process_name, window_title ORDER BY totalSec DESC`, [date]);
+    FROM activity_log WHERE date(timestamp)=? GROUP BY process_name, window_title ORDER BY totalSec DESC`, [date]);
 }
 
 function getAppDetails(date, processName) {
   const manualRows = queryAll(`SELECT id, window_title, duration_sec AS totalSec, 1 AS is_manual
-    FROM activity_log WHERE date(timestamp,'localtime')=? AND process_name=? AND is_manual=1 ORDER BY totalSec DESC`, [date, processName]);
+    FROM activity_log WHERE date(timestamp)=? AND process_name=? AND is_manual=1 ORDER BY totalSec DESC`, [date, processName]);
   const autoRows = queryAll(`SELECT window_title, SUM(duration_sec) AS totalSec, 0 AS is_manual
-    FROM activity_log WHERE date(timestamp,'localtime')=? AND process_name=? AND (is_manual=0 OR is_manual IS NULL) GROUP BY window_title ORDER BY totalSec DESC`, [date, processName]);
+    FROM activity_log WHERE date(timestamp)=? AND process_name=? AND (is_manual=0 OR is_manual IS NULL) GROUP BY window_title ORDER BY totalSec DESC`, [date, processName]);
   const allRows = [...manualRows, ...autoRows].sort((a, b) => b.totalSec - a.totalSec);
   const totalSec = allRows.reduce((s, r) => s + r.totalSec, 0);
   return { details: allRows.map(r => ({
@@ -88,7 +98,7 @@ function getAppDetails(date, processName) {
 
 describe('activity_log CRUD', () => {
   it('insertActivity 후 getDaySummary에서 조회', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     insertActivity('chrome', 'GitHub - Google Chrome', 10);
     insertActivity('chrome', 'YouTube - Google Chrome', 5);
     insertActivity('Code', 'main.js - VS Code', 20);
@@ -103,7 +113,7 @@ describe('activity_log CRUD', () => {
   });
 
   it('getDaySummary percentage 계산', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     insertActivity('chrome', 'test', 75);
     insertActivity('Code', 'test', 25);
 
@@ -119,7 +129,7 @@ describe('activity_log CRUD', () => {
   });
 
   it('getDayActivities는 process_name + window_title로 그룹핑', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     insertActivity('chrome', 'GitHub', 10);
     insertActivity('chrome', 'GitHub', 5);
     insertActivity('chrome', 'YouTube', 3);
@@ -133,7 +143,7 @@ describe('activity_log CRUD', () => {
 
 describe('수동 입력', () => {
   it('insertManualActivity로 추가 후 조회', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertManualActivity(date, 'Notion', '프로젝트 기획', 60);
 
     const summary = getDaySummary(date);
@@ -143,7 +153,7 @@ describe('수동 입력', () => {
   });
 
   it('getAppDetails에서 수동 항목은 isManual: true, id 포함', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertManualActivity(date, 'Notion', '기획서 작성', 30);
     insertActivity('Notion', '회의록', 60);
 
@@ -161,7 +171,7 @@ describe('수동 입력', () => {
   });
 
   it('updateManualActivity로 시간 수정', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertManualActivity(date, 'Figma', '디자인', 30);
 
     const before = getAppDetails(date, 'Figma');
@@ -175,7 +185,7 @@ describe('수동 입력', () => {
   });
 
   it('updateManualActivity는 자동 항목에는 적용 안 됨', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertActivity('chrome', 'test', 100);
 
     db.run('UPDATE activity_log SET duration_sec=? WHERE id=? AND is_manual=1', [999 * 60, 1]);
@@ -187,12 +197,12 @@ describe('수동 입력', () => {
 
 describe('deleteActivity', () => {
   it('특정 앱의 해당 날짜 기록 전체 삭제', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertActivity('chrome', 'A', 10);
     insertActivity('chrome', 'B', 20);
     insertActivity('Code', 'C', 30);
 
-    db.run("DELETE FROM activity_log WHERE process_name=? AND date(timestamp,'localtime')=?", ['chrome', date]);
+    db.run("DELETE FROM activity_log WHERE process_name=? AND date(timestamp)=?", ['chrome', date]);
 
     const summary = getDaySummary(date);
     expect(summary.apps).toHaveLength(1);

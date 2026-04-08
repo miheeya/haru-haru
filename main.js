@@ -38,8 +38,11 @@ function createWindow() {
     }
   });
 
+  const startHidden = process.argv.includes('--hidden');
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    if (!startHidden) {
+      mainWindow.show();
+    }
   });
 
   mainWindow.on('close', (e) => {
@@ -174,6 +177,30 @@ function registerIPC() {
     db.addCategoryRule(processName, titlePattern, category);
   });
 
+  // --- Auto-start ---
+
+  ipcMain.handle('get-autostart', () => {
+    if (!app.isPackaged) return false;
+    return app.getLoginItemSettings().openAtLogin;
+  });
+
+  ipcMain.handle('set-autostart', (_event, enabled) => {
+    if (!app.isPackaged) return false;
+    app.setLoginItemSettings({ openAtLogin: enabled, args: ['--hidden'] });
+    return app.getLoginItemSettings().openAtLogin;
+  });
+
+  // --- Update check ---
+
+  ipcMain.handle('check-for-updates', async () => {
+    const updater = require('./src/updater');
+    return updater.checkForUpdates(app.getVersion());
+  });
+
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+
 }
 
 app.whenReady().then(async () => {
@@ -182,6 +209,27 @@ app.whenReady().then(async () => {
   registerIPC();
   tray = createTray(mainWindow);
   tracker.startTracking();
+
+  // Background update check (once per 24h)
+  try {
+    const settings = db.getSettings();
+    const lastCheck = settings.last_update_check ? new Date(settings.last_update_check).getTime() : 0;
+    const hoursSinceCheck = (Date.now() - lastCheck) / (1000 * 60 * 60);
+    if (hoursSinceCheck >= 24) {
+      const updater = require('./src/updater');
+      const result = await updater.checkForUpdates(app.getVersion());
+      db.saveSettings({ last_update_check: new Date().toISOString() });
+      if (result.hasUpdate) {
+        mainWindow.webContents.once('did-finish-load', () => {
+          mainWindow.webContents.send('update-available', result);
+        });
+        // If already loaded, send immediately
+        if (!mainWindow.webContents.isLoading()) {
+          mainWindow.webContents.send('update-available', result);
+        }
+      }
+    }
+  } catch {}
 });
 
 app.on('before-quit', () => {

@@ -50,6 +50,18 @@ function createTray(mainWindow) {
       },
       { type: 'separator' },
       {
+        label: '자동 시작',
+        type: 'checkbox',
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: (menuItem) => {
+          app.setLoginItemSettings({
+            openAtLogin: menuItem.checked,
+            args: ['--hidden']
+          });
+        }
+      },
+      { type: 'separator' },
+      {
         label: '종료',
         click: () => {
           app.isQuitting = true;

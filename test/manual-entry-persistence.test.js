@@ -9,6 +9,15 @@ import initSqlJs from 'sql.js';
 
 let SQL;
 
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function toLocalISOString(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000`;
+}
+
 beforeEach(async () => {
   if (!SQL) SQL = await initSqlJs();
 });
@@ -29,14 +38,14 @@ function createDB() {
 function insertManualActivity(db, date, processName, windowTitle, durationMin) {
   db.run(
     'INSERT INTO activity_log (timestamp, process_name, window_title, duration_sec, is_manual) VALUES (?, ?, ?, ?, 1)',
-    [`${date}T12:00:00.000Z`, processName, windowTitle, durationMin * 60]
+    [`${date}T12:00:00.000`, processName, windowTitle, durationMin * 60]
   );
 }
 
 function getDaySummary(db, date) {
   const stmt = db.prepare(`
     SELECT process_name AS name, SUM(duration_sec) AS totalSec
-    FROM activity_log WHERE date(timestamp, 'localtime') = ?
+    FROM activity_log WHERE date(timestamp) = ?
     GROUP BY process_name ORDER BY totalSec DESC
   `);
   stmt.bind([date]);
@@ -49,7 +58,7 @@ function getDaySummary(db, date) {
 function getManualEntries(db, date) {
   const stmt = db.prepare(`
     SELECT id, process_name, window_title, duration_sec, is_manual
-    FROM activity_log WHERE date(timestamp, 'localtime') = ? AND is_manual = 1
+    FROM activity_log WHERE date(timestamp) = ? AND is_manual = 1
   `);
   stmt.bind([date]);
   const rows = [];
@@ -60,7 +69,7 @@ function getManualEntries(db, date) {
 
 describe('직접 입력 항목 영속성', () => {
   it('DB 직렬화 후 재로딩해도 수동 항목이 유지됨', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
 
     // Step 1: 첫 번째 "앱 세션" — 수동 입력 후 저장
     const db1 = createDB();
@@ -90,12 +99,12 @@ describe('직접 입력 항목 영속성', () => {
   });
 
   it('수동 항목이 getDaySummary에 포함됨', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
 
     const db1 = createDB();
     // 자동 추적 항목
     db1.run('INSERT INTO activity_log (timestamp, process_name, window_title, duration_sec, is_manual) VALUES (?, ?, ?, ?, 0)',
-      [new Date().toISOString(), 'chrome', 'GitHub', 100]);
+      [toLocalISOString(new Date()), 'chrome', 'GitHub', 100]);
     // 수동 입력 항목
     insertManualActivity(db1, date, 'Notion', '기획서', 30);
 
@@ -118,7 +127,7 @@ describe('직접 입력 항목 영속성', () => {
   });
 
   it('updateManualActivity 후 재시작해도 수정값 유지', () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
 
     const db1 = createDB();
     insertManualActivity(db1, date, 'Figma', '디자인', 30);
@@ -148,7 +157,7 @@ describe('직접 입력 항목 영속성', () => {
       duration_sec INTEGER DEFAULT 3
     )`);
     db1.run('INSERT INTO activity_log (timestamp, process_name, window_title, duration_sec) VALUES (?, ?, ?, ?)',
-      [new Date().toISOString(), 'chrome', 'test', 50]);
+      [toLocalISOString(new Date()), 'chrome', 'test', 50]);
 
     // initDB의 ALTER TABLE 시뮬레이션
     try { db1.run('ALTER TABLE activity_log ADD COLUMN is_manual INTEGER DEFAULT 0'); } catch {}
@@ -162,7 +171,7 @@ describe('직접 입력 항목 영속성', () => {
     expect(val === 0 || val === null).toBe(true);
 
     // 수동 입력은 정상 동작
-    const date = new Date().toISOString().split('T')[0];
+    const date = toLocalDateStr(new Date());
     insertManualActivity(db1, date, 'Notion', 'test', 15);
 
     const entries = getManualEntries(db1, date);

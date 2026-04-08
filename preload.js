@@ -30,4 +30,13 @@ contextBridge.exposeInMainWorld('api', {
   updateCategory: (id, category) => ipcRenderer.invoke('update-category', id, category),
   addCategoryRule: (processName, titlePattern, category) =>
     ipcRenderer.invoke('add-category-rule', processName, titlePattern, category),
+
+  // Auto-start
+  getAutoStart: () => ipcRenderer.invoke('get-autostart'),
+  setAutoStart: (enabled) => ipcRenderer.invoke('set-autostart', enabled),
+
+  // Update check
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onUpdateAvailable: (cb) => ipcRenderer.on('update-available', (_e, data) => cb(data)),
 });

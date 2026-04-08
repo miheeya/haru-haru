@@ -14,14 +14,11 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npx electron-builder --win --dir
-      - name: Zip Windows build
-        run: Compress-Archive -Path release\win-unpacked -DestinationPath release\haru-haru-${{ github.ref_name }}-win.zip
-        shell: pwsh
+      - run: npx electron-builder --win
       - uses: actions/upload-artifact@v4
         with:
           name: win-build
-          path: release/haru-haru-${{ github.ref_name }}-win.zip
+          path: release/*.exe
 
   build-mac:
     runs-on: macos-latest
@@ -56,5 +53,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*.zip
+          files: |
+            artifacts/*.exe
+            artifacts/*.zip
           generate_release_notes: true
