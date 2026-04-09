@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   getTodos: (date) => ipcRenderer.invoke('get-todos', date),
   saveTodos: (date, todos) => ipcRenderer.invoke('save-todos', date, todos),
   exportData: () => ipcRenderer.invoke('export-data'),
+  importData: () => ipcRenderer.invoke('import-data'),
   resetAllData: () => ipcRenderer.invoke('reset-all-data'),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),

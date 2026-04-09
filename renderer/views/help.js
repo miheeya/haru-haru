@@ -54,6 +54,8 @@ function renderHelp(container) {
         <li><strong>폴링 간격</strong> — 활성 창을 확인하는 주기 (기본 3초)</li>
         <li><strong>유휴 감지</strong> — 이 시간 동안 변화 없으면 자리비움으로 처리 (기본 5분)</li>
         <li><strong>업데이트 확인</strong> — 새 버전이 출시되었는지 확인합니다. 새 버전이 있으면 다운로드 링크를 안내합니다.</li>
+        <li><strong>CSV 내보내기</strong> — 활동 로그를 CSV 파일로 저장합니다.</li>
+        <li><strong>CSV 가져오기</strong> — 내보내기한 활동 로그 파일을 불러옵니다. 중복 데이터는 자동으로 건너뜁니다.</li>
         <li><strong>데이터 초기화</strong> — 모든 활동 기록을 삭제합니다. 설정값은 유지됩니다.</li>
       </ul>
     </div>

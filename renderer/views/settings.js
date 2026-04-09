@@ -52,6 +52,13 @@ async function renderSettings(container) {
         </div>
         <button class="btn" id="export-data-btn" style="white-space: nowrap;">내보내기</button>
       </div>
+      <div class="setting-item">
+        <div>
+          <h4 class="setting-label">CSV에서 가져오기</h4>
+          <div class="setting-desc">내보내기한 활동 로그 CSV 파일을 불러옵니다. 중복 데이터는 자동으로 건너뜁니다.</div>
+        </div>
+        <button class="btn" id="import-data-btn" style="white-space: nowrap;">가져오기</button>
+      </div>
     </div>
 
     <div class="settings-group" style="margin-top: 16px;">
@@ -104,6 +111,23 @@ async function renderSettings(container) {
     if (result.canceled) return;
     if (result.success) {
       alert(`CSV 파일 ${result.fileCount}개가 저장되었습니다.\n${result.dir}`);
+    }
+  });
+
+  document.getElementById('import-data-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('import-data-btn');
+    btn.disabled = true;
+    btn.textContent = '가져오는 중...';
+
+    const result = await window.api.importData();
+
+    btn.disabled = false;
+    btn.textContent = '가져오기';
+
+    if (result.canceled) return;
+    if (result.error) { alert(result.error); return; }
+    if (result.success) {
+      alert(`가져오기 완료\n- 추가: ${result.imported}건\n- 건너뜀(중복): ${result.skipped}건`);
     }
   });
 

@@ -552,6 +552,25 @@ function getIdleGaps(date, minGapMin = 10) {
   return gaps;
 }
 
+function importActivities(rows) {
+  let imported = 0, skipped = 0;
+  for (const row of rows) {
+    const existing = queryOne(
+      'SELECT id FROM activity_log WHERE timestamp=? AND process_name=? AND window_title=?',
+      [row.timestamp, row.processName, row.windowTitle]
+    );
+    if (existing) { skipped++; continue; }
+
+    db.run(
+      'INSERT INTO activity_log (timestamp, process_name, window_title, duration_sec, is_manual) VALUES (?, ?, ?, ?, ?)',
+      [row.timestamp, row.processName, row.windowTitle, row.durationSec, row.isManual ? 1 : 0]
+    );
+    imported++;
+  }
+  saveDB();
+  return { imported, skipped, total: rows.length };
+}
+
 module.exports = {
   initDB, saveDB,
   insertActivity, insertManualActivity, updateManualActivity, deleteActivity,
@@ -564,7 +583,8 @@ module.exports = {
   getIdleGaps,
   resetAllData,
   exportActivityLog,
-  exportDailySummary
+  exportDailySummary,
+  importActivities
 };
 
 function exportActivityLog() {

@@ -7,6 +7,25 @@ const { createTray } = require('./src/tray');
 let mainWindow = null;
 let tray = null;
 
+function parseCSVLine(line) {
+  const result = [];
+  let current = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { current += ch; }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { result.push(current.trim()); current = ''; }
+      else { current += ch; }
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 960,
@@ -103,6 +122,44 @@ function registerIPC() {
     fs.writeFileSync(path.join(dir, `하루하루_일별요약_${today}.csv`), sumCsv, 'utf8');
 
     return { success: true, dir, fileCount: 2 };
+  });
+
+  ipcMain.handle('import-data', async () => {
+    const openResult = await dialog.showOpenDialog(mainWindow, {
+      title: '가져올 CSV 파일 선택',
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+      properties: ['openFile']
+    });
+    if (openResult.canceled || !openResult.filePaths[0]) return { canceled: true };
+
+    const content = fs.readFileSync(openResult.filePaths[0], 'utf8');
+    const lines = content.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+    if (lines.length < 2) return { error: '가져올 수 있는 데이터가 없습니다.' };
+
+    const header = lines[0];
+    if (!header.includes('날짜시간') || !header.includes('앱')) {
+      return { error: '올바른 하루하루 활동로그 CSV 파일이 아닙니다.' };
+    }
+
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 5) continue;
+      const durationSec = parseInt(cols[3]);
+      if (!cols[0] || !cols[1] || !Number.isFinite(durationSec) || durationSec < 0) continue;
+      rows.push({
+        timestamp: cols[0],
+        processName: cols[1],
+        windowTitle: cols[2],
+        durationSec,
+        isManual: cols[4] === '예'
+      });
+    }
+
+    if (rows.length === 0) return { error: '가져올 수 있는 데이터가 없습니다.' };
+
+    const importResult = db.importActivities(rows);
+    return { success: true, ...importResult };
   });
 
   ipcMain.handle('reset-all-data', () => {
